@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AcolheBem — Gestão Hoteleira</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f2d52;--orange:#e86c1a;--orange-light:#fdf0e6;
+  --bg:#f8f9fa;--bg2:#ffffff;--border:#e5e7eb;
+  --text:#1a1a1a;--text2:#6b7280;--green:#2e7d32;--red:#c62828;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:210px;min-width:210px;background:var(--navy);display:flex;flex-direction:column;overflow-y:auto}
+.logo-area{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.logo-icon{width:38px;height:38px;background:var(--orange);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.logo-icon i{color:#fff;font-size:20px}
+.logo-name{font-size:16px;font-weight:600;color:#fff}
+.logo-sub{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px}
+.nav{padding:10px 0;flex:1}
+.nav-section{font-size:10px;color:rgba(255,255,255,0.3);padding:12px 16px 4px;letter-spacing:1px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:rgba(255,255,255,0.65);cursor:pointer;border-left:3px solid transparent;transition:all 0.15s}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,0.06)}
+.nav-item.active{color:#fff;background:rgba(232,108,26,0.18);border-left-color:var(--orange)}
+.nav-item i{font-size:17px}
+.hotel-badge{margin:0 12px 14px;background:rgba(255,255,255,0.08);border-radius:8px;padding:10px 12px}
+.hotel-nm{font-size:12px;color:rgba(255,255,255,0.85);font-weight:500}
+.hotel-pl{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.page{display:none;flex:1;flex-direction:column;overflow:hidden}
+.page.active{display:flex}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:#fff}
+.topbar-title{font-size:17px;font-weight:600;color:var(--text)}
+.topbar-sub{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:opacity 0.15s}
+.btn:hover{opacity:0.88}
+.btn-primary{background:var(--orange);color:#fff}
+.btn-secondary{background:none;border:1px solid var(--border);color:var(--text2)}
+.btn-success{background:#e8f5e9;color:var(--green);border:1px solid #a5d6a7}
+.btn-danger{background:#ffebee;color:var(--red);border:1px solid #ffcdd2}
+
+/* CONTENT AREA */
+.content{flex:1;overflow-y:auto;padding:20px 24px}
+
+/* CARDS */
+.cards-grid{display:grid;gap:12px}
+.cards-4{grid-template-columns:repeat(4,1fr)}
+.cards-3{grid-template-columns:repeat(3,1fr)}
+.cards-2{grid-template-columns:repeat(2,1fr)}
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.card-label{font-size:11px;color:var(--text2);margin-bottom:5px}
+.card-val{font-size:22px;font-weight:600;color:var(--text)}
+.card-sub{font-size:11px;color:var(--text2);margin-top:3px}
+.card-orange .card-val{color:var(--orange)}
+.card-green .card-val{color:var(--green)}
+.card-red .card-val{color:var(--red)}
+
+/* FORM */
+.form-section{background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden}
+.form-section-header{display:flex;align-items:center;gap:8px;padding:11px 16px;background:#f9fafb;border-bottom:1px solid var(--border)}
+.form-section-header i{color:var(--orange);font-size:16px}
+.form-section-title{font-size:13px;font-weight:600;color:var(--text)}
+.form-body{padding:16px}
+.form-grid{display:grid;gap:12px}
+.cols-2{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:1fr 1fr 1fr}
+.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.col-full{grid-column:1/-1}
+.field label{display:block;font-size:11px;font-weight:500;color:var(--text2);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:#fff;outline:none;transition:border-color 0.15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--orange)}
+.field textarea{resize:none;height:60px}
+.required{color:var(--orange)}
+.calc-box{background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.calc-label{font-size:12px;color:var(--text2)}
+.calc-val{font-size:20px;font-weight:600;color:var(--orange)}
+.nights-pill{display:inline-flex;align-items:center;gap:4px;background:var(--orange-light);color:var(--orange);font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;margin-top:6px}
+
+/* FORM FOOTER */
+.form-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fff}
+
+/* TABLE */
+.table-wrap{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--text2);padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;background:#f9fafb;text-transform:uppercase;letter-spacing:0.5px}
+td{font-size:13px;color:var(--text);padding:10px 14px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+
+/* STATUS BADGES */
+.badge{font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px}
+.badge-green{background:#e8f5e9;color:var(--green)}
+.badge-red{background:#ffebee;color:var(--red)}
+.badge-orange{background:var(--orange-light);color:var(--orange)}
+.badge-gray{background:#f5f5f5;color:#666}
+
+/* AVAILABILITY CARDS */
+.avail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.avail-card{border-radius:10px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:transform 0.1s}
+.avail-card:hover{transform:translateY(-2px)}
+.avail-header{padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
+.avail-header.livre{background:#e8f5e9}
+.avail-header.ocupado{background:#ffebee}
+.avail-room{font-size:19px;font-weight:600}
+.avail-room.livre{color:var(--green)}
+.avail-room.ocupado{color:var(--red)}
+.avail-body{padding:10px 12px;background:#fff}
+.avail-info{font-size:11px;color:var(--text2);margin-bottom:3px;display:flex;align-items:center;gap:4px}
+
+/* SEARCH BAR */
+.search-bar{padding:14px 24px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;gap:12px}
+.search-field label{font-size:11px;font-weight:500;color:var(--text2);display:block;margin-bottom:4px}
+.search-field input{padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);width:160px;outline:none}
+.search-field input:focus{border-color:var(--orange)}
+
+/* SUMMARY BAR */
+.summary-bar{padding:10px 24px;background:#fff;border-top:1px solid var(--border);display:flex;gap:20px}
+.sum-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
+.sum-dot{width:10px;height:10px;border-radius:2px}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;width:340px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.modal-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+.modal-header.occ{background:#ffebee}
+.modal-header.free{background:#e8f5e9}
+.modal-title{font-size:14px;font-weight:600}
+.modal-title.occ{color:var(--red)}
+.modal-title.free{color:var(--green)}
+.modal-close{background:none;border:none;cursor:pointer;font-size:18px;line-height:1}
+.modal-body{padding:16px 18px}
+.modal-row{display:flex;gap:8px;margin-bottom:10px}
+.modal-row i{font-size:16px;color:var(--text2);margin-top:1px}
+.modal-row-label{font-size:11px;color:var(--text2)}
+.modal-row-val{font-size:13px;font-weight:500;color:var(--text)}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px}
+
+/* CAFE TABLE */
+.cafe-section{background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden}
+.cafe-section-header{padding:11px 16px;background:#f9fafb;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
+.cafe-section-header i{color:var(--orange)}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--text2)}
+.loading i{font-size:32px;display:block;margin-bottom:10px;color:var(--border)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:200;transform:translateY(100px);transition:transform 0.3s;display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateY(0)}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo-area">
+    <div class="logo-icon"><i class="ti ti-home-2"></i></div>
+    <div class="logo-name">AcolheBem</div>
+    <div class="logo-sub">Gestão Hoteleira</div>
+  </div>
+  <div class="nav">
+    <div class="nav-section">Reservas</div>
+    <div class="nav-item active" onclick="showPage('nova-reserva')"><i class="ti ti-calendar-plus"></i> Nova Reserva</div>
+    <div class="nav-item" onclick="showPage('pesquisa')"><i class="ti ti-search"></i> Pesquisa de Reserva</div>
+    <div class="nav-item" onclick="showPage('mapa')"><i class="ti ti-layout-grid"></i> Mapa de Ocupação</div>
+    <div class="nav-section">Alimentação</div>
+    <div class="nav-item" onclick="showPage('cafe')"><i class="ti ti-coffee"></i> Café da Manhã</div>
+    <div class="nav-section">Operacional</div>
+    <div class="nav-item" onclick="showPage('governanca')"><i class="ti ti-tool"></i> Governança</div>
+    <div class="nav-item" onclick="showPage('relatorios')"><i class="ti ti-chart-bar"></i> Relatório</div>
+    <div class="nav-section">RH</div>
+    <div class="nav-item" onclick="showPage('ponto')"><i class="ti ti-fingerprint"></i> Ponto Eletrônico</div>
+  </div>
+  <div class="hotel-badge">
+    <div class="hotel-nm" id="hotelNome">Hotel</div>
+    <div class="hotel-pl">AcolheBem</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ===== NOVA RESERVA ===== -->
+  <div class="page active" id="page-nova-reserva">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Nova Reserva</div>
+        <div class="topbar-sub">Preencha os dados do hóspede e da estadia</div>
+      </div>
+      <span class="badge badge-orange" id="novoId">Gerando ID...</span>
+    </div>
+    <div class="content" style="overflow-y:auto">
+      <form id="formReserva" onsubmit="salvarReserva(event)">
+
+        <div class="form-section">
+          <div class="form-section-header"><i class="ti ti-door"></i><span class="form-section-title">Dados da Estadia</span></div>
+          <div class="form-body">
+            <div class="form-grid cols-4">
+              <div class="field">
+                <label>Check-in <span class="required">*</span></label>
+                <input type="date" id="checkin" required onchange="calcTotal()">
+              </div>
+              <div class="field">
+                <label>Check-out <span class="required">*</span></label>
+                <input type="date" id="checkout" required onchange="calcTotal()">
+              </div>
+              <div class="field">
+                <label>Quarto <span class="required">*</span></label>
+                <select id="quarto" required>
+                  <option value="">Selecione</option>
+                  <option>1</option><option>2</option><option>3</option><option>4</option>
+                  <option>5</option><option>6</option><option>7</option><option>8</option>
+                  <option>9</option><option>10</option><option>11</option><option>12</option>
+                  <option>14</option><option>15</option><option>16</option><option>17</option>
+                  <option>18</option><option>19</option><option>20</option><option>21</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Tipo de Cama</label>
+                <select id="tipoCama">
+                  <option>1 casal</option><option>1 solteiro</option><option>2 solteiros</option>
+                  <option>1 casal e 1 solteiro</option><option>3 solteiros</option><option>4 solteiros</option>
+                </select>
+              </div>
+            </div>
+            <div id="nightsPill"></div>
+            <div class="form-grid cols-4" style="margin-top:12px">
+              <div class="field">
+                <label>Adultos</label>
+                <input type="number" id="adultos" min="1" value="2">
+              </div>
+              <div class="field">
+                <label>Crianças</label>
+                <input type="number" id="criancas" min="0" value="0">
+              </div>
+              <div class="field">
+                <label>Bebês</label>
+                <input type="number" id="bebes" min="0" value="0">
+              </div>
+              <div class="field">
+                <label>Status <span class="required">*</span></label>
+                <select id="status">
+                  <option>Reservado</option><option>Liquidado</option>
+                  <option>Cortesia</option><option>Pré-Reserva</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-header"><i class="ti ti-user"></i><span class="form-section-title">Dados do Hóspede</span></div>
+          <div class="form-body">
+            <div class="form-grid cols-2">
+              <div class="field col-full">
+                <label>Nome completo <span class="required">*</span></label>
+                <input type="text" id="hospede" placeholder="Ex: Maria Silva Santos" required>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-header"><i class="ti ti-currency-dollar"></i><span class="form-section-title">Financeiro</span></div>
+          <div class="form-body">
+            <div class="form-grid cols-3">
+              <div class="field">
+                <label>Valor da Diária (R$)</label>
+                <input type="number" id="valorDiaria" placeholder="0,00" step="0.01" onchange="calcTotal()">
+              </div>
+              <div class="field">
+                <label>Valor de Entrada (R$)</label>
+                <input type="number" id="valorEntrada" placeholder="0,00" step="0.01">
+              </div>
+              <div class="field">
+                <label>Forma de Pagamento</label>
+                <select id="formaPagamento">
+                  <option>PIX</option><option>Cartão de débito</option>
+                  <option>Cartão de crédito</option><option>Dinheiro</option><option>Transferência</option>
+                </select>
+              </div>
+            </div>
+            <div class="calc-box">
+              <span class="calc-label">Valor total estimado</span>
+              <span class="calc-val" id="valorTotal">R$ —</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-header"><i class="ti ti-notes"></i><span class="form-section-title">Observações</span></div>
+          <div class="form-body">
+            <div class="field">
+              <textarea id="observacoes" placeholder="Pedidos especiais, informações adicionais..."></textarea>
+            </div>
+          </div>
+        </div>
+
+      </form>
+    </div>
+    <div class="form-footer">
+      <button class="btn btn-secondary" onclick="limparFormulario()">Limpar</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="salvarReserva(event)">
+          <i class="ti ti-check"></i> Confirmar Reserva
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PESQUISA ===== -->
+  <div class="page" id="page-pesquisa">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Pesquisa de Reserva</div>
+        <div class="topbar-sub">Verifique a disponibilidade por período</div>
+      </div>
+    </div>
+    <div class="search-bar">
+      <div class="search-field">
+        <label>Check-in</label>
+        <input type="date" id="pesqCheckin">
+      </div>
+      <div class="search-field">
+        <label>Check-out</label>
+        <input type="date" id="pesqCheckout">
+      </div>
+      <span id="pesqNights" style="font-size:12px;color:var(--orange);font-weight:500;align-self:center;margin-bottom:2px"></span>
+      <button class="btn btn-primary" onclick="pesquisarDisponibilidade()">
+        <i class="ti ti-search"></i> Verificar disponibilidade
+      </button>
+    </div>
+    <div class="content" id="pesqResultado">
+      <div class="loading"><i class="ti ti-calendar-search"></i>Selecione um período para verificar a disponibilidade</div>
+    </div>
+    <div class="summary-bar" id="pesqSummary" style="display:none">
+      <div class="sum-item"><div class="sum-dot" style="background:#a5d6a7"></div><span id="sumLivres">0 livres</span></div>
+      <div class="sum-item"><div class="sum-dot" style="background:#ef9a9a"></div><span id="sumOcupados">0 ocupados</span></div>
+    </div>
+  </div>
+
+  <!-- ===== MAPA ===== -->
+  <div class="page" id="page-mapa">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div>
+          <div class="topbar-title">Mapa de Ocupação</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)">
+          <button class="btn btn-secondary" style="padding:5px 10px" onclick="changeMonth(-1)"><i class="ti ti-chevron-left" style="font-size:12px"></i></button>
+          <span id="mapaMonth" style="min-width:120px;text-align:center;font-weight:500"></span>
+          <button class="btn btn-secondary" style="padding:5px 10px" onclick="changeMonth(1)"><i class="ti ti-chevron-right" style="font-size:12px"></i></button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="showPage('nova-reserva')"><i class="ti ti-plus"></i> Nova Reserva</button>
+    </div>
+    <div class="cards-grid cards-4" style="padding:14px 24px;border-bottom:1px solid var(--border);background:#fff">
+      <div class="card card-orange"><div class="card-label">Ocupação Hoje</div><div class="card-val" id="mapOcup">—</div><div class="card-sub" id="mapOcupSub"></div></div>
+      <div class="card"><div class="card-label">Check-ins Hoje</div><div class="card-val" id="mapCI">—</div><div class="card-sub">Chegando hoje</div></div>
+      <div class="card"><div class="card-label">Check-outs Hoje</div><div class="card-val" id="mapCO">—</div><div class="card-sub">Saindo hoje</div></div>
+      <div class="card card-green"><div class="card-label">Disponíveis</div><div class="card-val" id="mapFree">—</div><div class="card-sub">Quartos livres</div></div>
+    </div>
+    <div style="flex:1;overflow:auto;padding:14px 24px" id="mapaGrid"></div>
+    <div style="display:flex;gap:16px;padding:10px 24px;border-top:1px solid var(--border);background:#fff">
+      <div class="sum-item"><div class="sum-dot" style="background:#ef9a9a"></div>Ocupado</div>
+      <div class="sum-item"><div class="sum-dot" style="background:#fff3e0;border:1px solid #ffcc80"></div>Check-out</div>
+      <div class="sum-item"><div class="sum-dot" style="background:#e8f5e9"></div>Livre</div>
+      <div class="sum-item"><div class="sum-dot" style="background:var(--orange);border-radius:50%"></div>Hoje</div>
+    </div>
+  </div>
+
+  <!-- ===== CAFÉ ===== -->
+  <div class="page" id="page-cafe">
+    <div class="topbar">
+      <div><div class="topbar-title">Café da Manhã</div><div class="topbar-sub">Planejamento e lista de hóspedes por dia</div></div>
+      <button class="btn btn-secondary" onclick="imprimirCafe()"><i class="ti ti-printer"></i> Imprimir lista</button>
+    </div>
+    <div class="search-bar">
+      <div class="search-field">
+        <label>📅 Selecione a data do café</label>
+        <input type="date" id="cafeData" style="width:200px">
+      </div>
+      <button class="btn btn-primary" onclick="carregarCafe()"><i class="ti ti-search"></i> Carregar dia</button>
+    </div>
+    <div class="content" id="cafeConteudo">
+      <div class="loading"><i class="ti ti-coffee"></i>Selecione uma data para ver o planejamento</div>
+    </div>
+  </div>
+
+  <!-- ===== GOVERNANÇA ===== -->
+  <div class="page" id="page-governanca">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div><div class="topbar-title">Governança</div></div>
+        <span class="badge badge-orange" id="govDataPill"></span>
+      </div>
+      <button class="btn btn-secondary"><i class="ti ti-printer"></i> Imprimir</button>
+    </div>
+    <div class="cards-grid cards-4" style="padding:14px 24px;border-bottom:1px solid var(--border);background:#fff">
+      <div class="card card-red"><div class="card-label">Check-outs</div><div class="card-val" id="govCO">—</div><div class="card-sub">Saindo hoje</div></div>
+      <div class="card card-green"><div class="card-label">Check-ins</div><div class="card-val" id="govCI">—</div><div class="card-sub">Chegando hoje</div></div>
+      <div class="card card-orange"><div class="card-label">Já limpos</div><div class="card-val" id="govLimpos">0</div><div class="card-sub">Prontos</div></div>
+      <div class="card"><div class="card-label">Pendentes</div><div class="card-val" id="govPend">0</div><div class="card-sub">Aguardando</div></div>
+    </div>
+    <div class="content" id="govConteudo">
+      <div class="loading"><i class="ti ti-tool"></i>Carregando dados de governança...</div>
+    </div>
+  </div>
+
+  <!-- ===== RELATÓRIOS ===== -->
+  <div class="page" id="page-relatorios">
+    <div class="topbar">
+      <div><div class="topbar-title">Relatório</div><div class="topbar-sub">Visão geral do desempenho</div></div>
+    </div>
+    <div class="content">
+      <div class="loading"><i class="ti ti-chart-bar"></i>Em construção — em breve disponível!</div>
+    </div>
+  </div>
+
+  <!-- ===== PONTO ===== -->
+  <div class="page" id="page-ponto">
+    <div class="topbar">
+      <div><div class="topbar-title">Ponto Eletrônico</div><div class="topbar-sub">Registro de jornada de trabalho</div></div>
+    </div>
+    <div class="content">
+      <div class="loading"><i class="ti ti-fingerprint"></i>Em construção — em breve disponível!</div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
+
+<script>
+const API = ''; // Em produção: URL da sua API Vercel
+
+// ===== NAVEGAÇÃO =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget && event.currentTarget.classList.add('active');
+
+  // Carregar dados ao entrar na página
+  if (id === 'mapa') renderMapa();
+  if (id === 'governanca') carregarGovernanca();
+  if (id === 'cafe') { document.getElementById('cafeData').value = hoje(); carregarCafe(); }
+}
+
+// ===== UTILS =====
+function hoje() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function fmtBR(dateStr) {
+  if (!dateStr) return '—';
+  const [y,m,d] = dateStr.split('-');
+  return d + '/' + m + '/' + y;
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.className = 'toast show ' + type;
+  document.getElementById('toastMsg').textContent = msg;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+// ===== NOVA RESERVA =====
+function calcTotal() {
+  const ci = document.getElementById('checkin').value;
+  const co = document.getElementById('checkout').value;
+  const diaria = parseFloat(document.getElementById('valorDiaria').value) || 0;
+  const pill = document.getElementById('nightsPill');
+  const totalEl = document.getElementById('valorTotal');
+
+  if (ci && co) {
+    const noites = Math.round((new Date(co) - new Date(ci)) / 86400000);
+    if (noites > 0) {
+      pill.innerHTML = `<span class="nights-pill"><i class="ti ti-moon" style="font-size:12px"></i> ${noites} noite${noites > 1 ? 's' : ''}</span>`;
+      if (diaria > 0) {
+        const total = noites * diaria;
+        totalEl.textContent = 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits:2});
+        document.getElementById('valorTotal').dataset.val = total;
+      }
+      return;
+    }
+  }
+  pill.innerHTML = '';
+  totalEl.textContent = 'R$ —';
+}
+
+function limparFormulario() {
+  document.getElementById('formReserva').reset();
+  document.getElementById('nightsPill').innerHTML = '';
+  document.getElementById('valorTotal').textContent = 'R$ —';
+}
+
+async function salvarReserva(e) {
+  if (e) e.preventDefault();
+
+  const hospede = document.getElementById('hospede').value.trim();
+  const quarto  = document.getElementById('quarto').value;
+  const checkin = document.getElementById('checkin').value;
+  const checkout= document.getElementById('checkout').value;
+
+  if (!hospede || !quarto || !checkin || !checkout) {
+    showToast('Preencha os campos obrigatórios!', 'error');
+    return;
+  }
+
+  const ci = new Date(checkin), co = new Date(checkout);
+  const noites = Math.round((co - ci) / 86400000);
+  const diaria = parseFloat(document.getElementById('valorDiaria').value) || 0;
+
+  const reserva = {
+    hospede,
+    quarto,
+    checkin: fmtBR(checkin),
+    checkout: fmtBR(checkout),
+    tipoCama: document.getElementById('tipoCama').value,
+    adultos: document.getElementById('adultos').value,
+    criancas: document.getElementById('criancas').value,
+    status: document.getElementById('status').value,
+    valorDiaria: diaria || '',
+    valorEntrada: document.getElementById('valorEntrada').value || '',
+    formaPagamento: document.getElementById('formaPagamento').value,
+    valorTotal: diaria > 0 ? noites * diaria : '',
+    observacoes: document.getElementById('observacoes').value,
+  };
+
+  try {
+    const resp = await fetch(API + '/api/reservas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reserva),
+    });
+    const data = await resp.json();
+
+    if (data.success) {
+      showToast('✅ Reserva #' + data.id + ' criada com sucesso!');
+      limparFormulario();
+    } else {
+      showToast('Erro ao salvar: ' + (data.error || 'Tente novamente'), 'error');
+    }
+  } catch (err) {
+    showToast('Erro de conexão com a planilha', 'error');
+    console.error(err);
+  }
+}
+
+// ===== PESQUISA =====
+document.addEventListener('DOMContentLoaded', () => {
+  const ci = document.getElementById('pesqCheckin');
+  const co = document.getElementById('pesqCheckout');
+  const upd = () => {
+    if (ci.value && co.value) {
+      const n = Math.round((new Date(co.value) - new Date(ci.value)) / 86400000);
+      document.getElementById('pesqNights').textContent = n > 0 ? n + ' noite' + (n > 1 ? 's' : '') : '';
+    }
+  };
+  ci.addEventListener('change', upd);
+  co.addEventListener('change', upd);
+
+  // Mapa inicial
+  renderMapa();
+  carregarGovernanca();
+  document.getElementById('cafeData').value = hoje();
+
+  // Atualiza nome do hotel
+  document.getElementById('hotelNome').textContent = 'Meu Hotel';
+});
+
+async function pesquisarDisponibilidade() {
+  const ci = document.getElementById('pesqCheckin').value;
+  const co = document.getElementById('pesqCheckout').value;
+  if (!ci || !co) { showToast('Selecione as datas', 'error'); return; }
+
+  const area = document.getElementById('pesqResultado');
+  area.innerHTML = '<div class="loading"><i class="ti ti-loader ti-spin"></i>Verificando disponibilidade...</div>';
+
+  try {
+    const resp = await fetch(`${API}/api/disponibilidade?checkin=${ci}&checkout=${co}`);
+    const data = await resp.json();
+
+    if (!data.success) throw new Error(data.error);
+
+    let html = '<div class="avail-grid">';
+    for (const q of data.quartos) {
+      const isLivre = q.status === 'LIVRE';
+      html += `<div class="avail-card" onclick="${isLivre ? `reservarQuartoLivre(${q.quarto},'${ci}','${co}')` : `verDetalhesOcupado(${JSON.stringify(q).replace(/"/g,"'")})`}">
+        <div class="avail-header ${isLivre ? 'livre' : 'ocupado'}">
+          <span class="avail-room ${isLivre ? 'livre' : 'ocupado'}">Quarto ${q.quarto}</span>
+          <span class="badge ${isLivre ? 'badge-green' : 'badge-red'}">${isLivre ? 'Livre' : 'Ocupado'}</span>
+        </div>
+        <div class="avail-body">
+          ${isLivre
+            ? `<div class="avail-info"><i class="ti ti-check" style="color:var(--green)"></i>Disponível no período</div>
+               <button class="btn btn-success" style="width:100%;margin-top:8px;font-size:12px">
+                 <i class="ti ti-calendar-plus" style="font-size:13px"></i> Reservar agora
+               </button>`
+            : `<div class="avail-info"><i class="ti ti-user"></i>${q.hospede}</div>
+               <div class="avail-info"><i class="ti ti-calendar"></i>${q.checkin} → ${q.checkout}</div>
+               <button class="btn btn-danger" style="width:100%;margin-top:8px;font-size:12px">
+                 <i class="ti ti-eye" style="font-size:13px"></i> Ver detalhes
+               </button>`
+          }
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+    area.innerHTML = html;
+
+    document.getElementById('pesqSummary').style.display = 'flex';
+    document.getElementById('sumLivres').textContent = data.resumo.livres + ' livre' + (data.resumo.livres !== 1 ? 's' : '');
+    document.getElementById('sumOcupados').textContent = data.resumo.ocupados + ' ocupado' + (data.resumo.ocupados !== 1 ? 's' : '');
+  } catch (err) {
+    area.innerHTML = '<div class="loading"><i class="ti ti-alert-circle"></i>Erro ao verificar disponibilidade</div>';
+    console.error(err);
+  }
+}
+
+function reservarQuartoLivre(quarto, checkin, checkout) {
+  showPage('nova-reserva');
+  document.getElementById('quarto').value = quarto;
+  document.getElementById('checkin').value = checkin;
+  document.getElementById('checkout').value = checkout;
+  calcTotal();
+}
+
+function verDetalhesOcupado(q) {
+  document.getElementById('modalBox').innerHTML = `
+    <div class="modal-header occ">
+      <span class="modal-title occ"><i class="ti ti-door" style="font-size:14px;vertical-align:-2px"></i> Quarto ${q.quarto} — Ocupado</span>
+      <button class="modal-close" style="color:var(--red)" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row"><i class="ti ti-user"></i><div><div class="modal-row-label">Hóspede</div><div class="modal-row-val">${q.hospede}</div></div></div>
+      <div class="modal-row"><i class="ti ti-calendar"></i><div><div class="modal-row-label">Período</div><div class="modal-row-val">${q.checkin} → ${q.checkout}</div></div></div>
+      <div class="modal-row"><i class="ti ti-tag"></i><div><div class="modal-row-label">Status</div><div class="modal-row-val">${q.statusReserva || '—'}</div></div></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Fechar</button></div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+// ===== MAPA =====
+const QUARTOS = [1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18,19,20,21];
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+let mapaYear = new Date().getFullYear(), mapaMonth = new Date().getMonth();
+let reservasCache = [];
+
+function changeMonth(d) {
+  mapaMonth += d;
+  if (mapaMonth > 11) { mapaMonth = 0; mapaYear++; }
+  if (mapaMonth < 0)  { mapaMonth = 11; mapaYear--; }
+  renderMapa();
+}
+
+function parseBR(s) {
+  if (!s) return null;
+  if (s.includes('/')) { const [dd,mm,yyyy] = s.split('/'); return new Date(`${yyyy}-${mm}-${dd}`); }
+  return new Date(s);
+}
+
+function getStatus(room, day) {
+  const d = new Date(mapaYear, mapaMonth, day);
+  for (const r of reservasCache) {
+    if (String(r.quarto).trim() !== String(room)) continue;
+    const ci = parseBR(r.checkin), co = parseBR(r.checkout);
+    if (!ci || !co) continue;
+    if (d >= ci && d < co) return { type: d.getTime() === co.getTime() - 86400000 ? 'checkout' : 'occ', res: r };
+  }
+  return { type: 'free', res: null };
+}
+
+async function renderMapa() {
+  const dias = new Date(mapaYear, mapaMonth + 1, 0).getDate();
+  const td = new Date().getDate(), tm = new Date().getMonth(), ty = new Date().getFullYear();
+  const isCurrentMonth = mapaMonth === tm && mapaYear === ty;
+  document.getElementById('mapaMonth').textContent = MESES[mapaMonth] + ' ' + mapaYear;
+
+  // Busca reservas
+  try {
+    const resp = await fetch(API + '/api/reservas');
+    const data = await resp.json();
+    if (data.success) reservasCache = data.data;
+  } catch(e) { console.error(e); }
+
+  // Stats hoje
+  if (isCurrentMonth) {
+    let occ = 0, ci = 0, co = 0;
+    const todayStr = `${String(td).padStart(2,'0')}/${String(tm+1).padStart(2,'0')}/${ty}`;
+    for (const room of QUARTOS) {
+      const st = getStatus(room, td);
+      if (st.type === 'occ') occ++;
+      if (st.res) {
+        if (st.res.checkin === todayStr) ci++;
+        if (st.res.checkout === todayStr) co++;
+      }
+    }
+    document.getElementById('mapOcup').textContent = Math.round(occ/QUARTOS.length*100) + '%';
+    document.getElementById('mapOcupSub').textContent = occ + ' de ' + QUARTOS.length;
+    document.getElementById('mapCI').textContent = ci;
+    document.getElementById('mapCO').textContent = co;
+    document.getElementById('mapFree').textContent = QUARTOS.length - occ;
+  }
+
+  const COLS = `54px repeat(${dias}, 1fr)`;
+  let html = `<div style="display:grid;grid-template-columns:${COLS};gap:2px;margin-bottom:4px;">
+    <div style="height:26px;display:flex;align-items:center;font-size:10px;color:var(--text2);font-weight:600">Qto</div>`;
+  for (let d = 1; d <= dias; d++) {
+    const isT = isCurrentMonth && d === td;
+    html += `<div style="height:26px;display:flex;align-items:center;justify-content:center;font-size:10px;color:${isT ? 'var(--orange)' : 'var(--text2)'};${isT ? 'font-weight:600' : ''}">${d}</div>`;
+  }
+  html += '</div>';
+
+  for (const room of QUARTOS) {
+    html += `<div style="display:grid;grid-template-columns:${COLS};gap:2px;margin-bottom:2px;">
+      <div style="height:26px;background:#f9fafb;border-radius:3px;display:flex;align-items:center;padding-left:6px;font-size:11px;font-weight:500">${room}</div>`;
+    for (let d = 1; d <= dias; d++) {
+      const st = getStatus(room, d);
+      const isT = isCurrentMonth && d === td;
+      const bg = st.type === 'occ' ? '#ef9a9a' : st.type === 'checkout' ? '#fff3e0' : '#e8f5e9';
+      const outline = isT ? 'outline:2px solid var(--orange);outline-offset:-2px;' : '';
+      const click = st.type === 'free'
+        ? `onclick="mapaClickLivre(${room},${d})"`
+        : `onclick="mapaClickOcupado('${room}',${d})"`;
+      html += `<div style="height:26px;background:${bg};border-radius:3px;cursor:pointer;${outline}" ${click} title="Quarto ${room} - Dia ${d}"></div>`;
+    }
+    html += '</div>';
+  }
+  document.getElementById('mapaGrid').innerHTML = html;
+}
+
+function mapaClickLivre(room, day) {
+  const dateStr = `${mapaYear}-${String(mapaMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  document.getElementById('modalBox').innerHTML = `
+    <div class="modal-header free">
+      <span class="modal-title free"><i class="ti ti-door-off" style="font-size:14px;vertical-align:-2px"></i> Quarto ${room} — Livre</span>
+      <button class="modal-close" style="color:var(--green)" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row"><i class="ti ti-calendar-check"></i><div><div class="modal-row-label">Data</div><div class="modal-row-val">${fmtBR(dateStr)}</div></div></div>
+      <div class="modal-row"><i class="ti ti-check"></i><div><div class="modal-row-label">Disponibilidade</div><div class="modal-row-val" style="color:var(--green)">Quarto disponível</div></div></div>
+      <button class="btn btn-primary" style="width:100%" onclick="closeModal();reservarQuartoLivre(${room},'${dateStr}','${dateStr}')">
+        <i class="ti ti-calendar-plus"></i> Reservar Quarto ${room} a partir de ${fmtBR(dateStr)}
+      </button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function mapaClickOcupado(room, day) {
+  const st = getStatus(parseInt(room), day);
+  if (!st.res) return;
+  const r = st.res;
+  document.getElementById('modalBox').innerHTML = `
+    <div class="modal-header occ">
+      <span class="modal-title occ"><i class="ti ti-door" style="font-size:14px;vertical-align:-2px"></i> Quarto ${room} — Ocupado</span>
+      <button class="modal-close" style="color:var(--red)" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row"><i class="ti ti-user"></i><div><div class="modal-row-label">Hóspede</div><div class="modal-row-val">${r.hospede}</div></div></div>
+      <div class="modal-row"><i class="ti ti-calendar"></i><div><div class="modal-row-label">Período</div><div class="modal-row-val">${r.checkin} → ${r.checkout}</div></div></div>
+      <div class="modal-row"><i class="ti ti-bed"></i><div><div class="modal-row-label">Tipo de cama</div><div class="modal-row-val">${r.tipoCama || '—'}</div></div></div>
+      <div class="modal-row"><i class="ti ti-users"></i><div><div class="modal-row-label">Hóspedes</div><div class="modal-row-val">${r.adultos || 0} adulto${r.adultos != 1 ? 's' : ''}${r.criancas > 0 ? ' · ' + r.criancas + ' criança' : ''}</div></div></div>
+      <div class="modal-row"><i class="ti ti-tag"></i><div><div class="modal-row-label">Status</div><div class="modal-row-val">${r.status}</div></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Fechar</button>
+      <button class="btn btn-primary" style="flex:1"><i class="ti ti-edit" style="font-size:13px"></i> Ver completo</button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+// ===== CAFÉ =====
+async function carregarCafe() {
+  const data = document.getElementById('cafeData').value;
+  if (!data) return;
+
+  const area = document.getElementById('cafeConteudo');
+  area.innerHTML = '<div class="loading"><i class="ti ti-loader ti-spin"></i>Carregando...</div>';
+
+  try {
+    const resp = await fetch(`${API}/api/cafe?data=${data}`);
+    const d = await resp.json();
+    if (!d.success) throw new Error(d.error);
+
+    const r = d.resumo;
+    const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    const dt = new Date(data + 'T12:00:00');
+    const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
+    let html = `
+      <div class="cards-grid cards-3" style="margin-bottom:14px">
+        <div class="card"><div class="card-label">Adultos</div><div class="card-val">${r.totalAdultos}</div><div class="card-sub">café completo</div></div>
+        <div class="card"><div class="card-label">Crianças</div><div class="card-val">${r.totalCriancas}</div><div class="card-sub">meia porção</div></div>
+        <div class="card card-orange"><div class="card-label">Total geral</div><div class="card-val">${r.totalGeral}</div><div class="card-sub">${dias[dt.getDay()]}, ${dt.getDate()} de ${meses[dt.getMonth()]}</div></div>
+      </div>
+      <div class="cafe-section">
+        <div class="cafe-section-header"><i class="ti ti-list"></i>Lista de hóspedes — ${fmtBR(data)}</div>`;
+
+    if (d.hospedes.length === 0) {
+      html += '<div style="padding:20px;text-align:center;color:var(--text2)">Nenhum hóspede nesta data</div>';
+    } else {
+      html += '<div class="table-wrap"><table><thead><tr><th>Quarto</th><th>Hóspede</th><th>Adultos</th><th>Crianças</th><th>Total</th></tr></thead><tbody>';
+      for (const h of d.hospedes) {
+        html += `<tr>
+          <td><strong>${h.quarto}</strong></td>
+          <td>${h.hospede}</td>
+          <td><span class="badge badge-green">${h.adultos} adulto${h.adultos !== 1 ? 's' : ''}</span></td>
+          <td>${h.criancas > 0 ? `<span class="badge" style="background:#f3e5f5;color:#6a1b9a">${h.criancas} criança${h.criancas !== 1 ? 's' : ''}</span>` : '<span style="color:var(--text2)">—</span>'}</td>
+          <td><strong>${h.adultos + h.criancas}</strong></td>
+        </tr>`;
+      }
+      html += '</tbody></table></div>';
+    }
+    html += '</div>';
+    area.innerHTML = html;
+  } catch(e) {
+    area.innerHTML = '<div class="loading"><i class="ti ti-alert-circle"></i>Erro ao carregar dados</div>';
+    console.error(e);
+  }
+}
+
+function imprimirCafe() { window.print(); }
+
+// ===== GOVERNANÇA =====
+let limpezaState = {};
+
+async function carregarGovernanca() {
+  const hoje_str = hoje();
+  const dt = new Date(hoje_str + 'T12:00:00');
+  const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  document.getElementById('govDataPill').textContent = `${dias[dt.getDay()]}, ${dt.getDate()} de ${meses[dt.getMonth()]}`;
+
+  try {
+    const resp = await fetch(API + '/api/reservas');
+    const data = await resp.json();
+    if (!data.success) throw new Error();
+
+    const reservas = data.data;
+    const todayBR = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+
+    const checkouts = reservas.filter(r => r.checkout === todayBR);
+    const checkins  = reservas.filter(r => r.checkin  === todayBR);
+
+    document.getElementById('govCO').textContent = checkouts.length;
+    document.getElementById('govCI').textContent = checkins.length;
+
+    limpezaState = {};
+    checkouts.forEach(r => limpezaState[r.quarto] = 'pendente');
+    updateGovStats();
+
+    let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
+
+    // CHECKOUTS
+    html += `<div class="form-section">
+      <div class="form-section-header" style="background:#ffebee">
+        <i class="ti ti-logout" style="color:var(--red)"></i>
+        <span class="form-section-title" style="color:var(--red)">Check-outs (${checkouts.length})</span>
+      </div>
+      <div>`;
+    if (checkouts.length === 0) {
+      html += '<div style="padding:16px;text-align:center;color:var(--text2)">Nenhum check-out hoje</div>';
+    } else {
+      for (const r of checkouts) {
+        html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+          <div style="width:32px;height:32px;background:#ffebee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--red);flex-shrink:0">${r.quarto}</div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:500">${r.hospede}</div>
+            <div style="font-size:11px;color:var(--text2)">${r.tipoCama || '—'} · ${r.adultos || 0} adulto${r.adultos != 1 ? 's' : ''}</div>
+          </div>
+          <span style="font-size:11px;color:var(--red);font-weight:500">Saindo</span>
+        </div>`;
+      }
+    }
+    html += '</div></div>';
+
+    // CHECKINS
+    html += `<div class="form-section">
+      <div class="form-section-header" style="background:#e8f5e9">
+        <i class="ti ti-login" style="color:var(--green)"></i>
+        <span class="form-section-title" style="color:var(--green)">Check-ins (${checkins.length})</span>
+      </div>
+      <div>`;
+    if (checkins.length === 0) {
+      html += '<div style="padding:16px;text-align:center;color:var(--text2)">Nenhum check-in hoje</div>';
+    } else {
+      for (const r of checkins) {
+        html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+          <div style="width:32px;height:32px;background:#e8f5e9;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--green);flex-shrink:0">${r.quarto}</div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:500">${r.hospede}</div>
+            <div style="font-size:11px;color:var(--text2)">${r.tipoCama || '—'} · até ${r.checkout}</div>
+          </div>
+          <span style="font-size:11px;color:var(--green);font-weight:500">Chegando</span>
+        </div>`;
+      }
+    }
+    html += '</div></div>';
+    html += '</div>';
+
+    // LIMPEZA
+    html += `<div class="form-section" style="margin-top:14px">
+      <div class="form-section-header" style="background:#fff8e1">
+        <i class="ti ti-brush" style="color:#f57f17"></i>
+        <span class="form-section-title" style="color:#f57f17">Controle de Limpeza</span>
+        <span class="badge" style="background:#fff9c4;color:#f57f17;margin-left:auto" id="limpBadge">${checkouts.length} pendentes</span>
+      </div>
+      <div id="limpList">`;
+
+    if (checkouts.length === 0) {
+      html += '<div style="padding:16px;text-align:center;color:var(--text2)">Nenhum quarto para limpar hoje</div>';
+    } else {
+      for (const r of checkouts) {
+        html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)" id="lrow-${r.quarto}">
+          <div style="width:32px;height:32px;background:#fff8e1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#f57f17;flex-shrink:0" id="ldot-${r.quarto}">${r.quarto}</div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:500" id="lname-${r.quarto}">${r.hospede}</div>
+            <div style="font-size:11px;color:var(--text2)">${r.tipoCama || '—'} · Recolher enxoval</div>
+          </div>
+          <button class="btn btn-danger" style="font-size:12px" id="lbtn-${r.quarto}" onclick="toggleLimpeza('${r.quarto}',${checkouts.length})">⏳ Pendente</button>
+        </div>`;
+      }
+    }
+    html += '</div></div>';
+
+    document.getElementById('govConteudo').innerHTML = html;
+
+  } catch(e) {
+    document.getElementById('govConteudo').innerHTML = '<div class="loading"><i class="ti ti-alert-circle"></i>Erro ao carregar governança</div>';
+    console.error(e);
+  }
+}
+
+function toggleLimpeza(quarto, total) {
+  limpezaState[quarto] = limpezaState[quarto] === 'limpo' ? 'pendente' : 'limpo';
+  const isLimpo = limpezaState[quarto] === 'limpo';
+  const dot  = document.getElementById('ldot-' + quarto);
+  const name = document.getElementById('lname-' + quarto);
+  const btn  = document.getElementById('lbtn-' + quarto);
+  dot.style.background  = isLimpo ? '#e8f5e9' : '#fff8e1';
+  dot.style.color       = isLimpo ? 'var(--green)' : '#f57f17';
+  name.style.textDecoration = isLimpo ? 'line-through' : 'none';
+  name.style.color          = isLimpo ? 'var(--text2)' : 'var(--text)';
+  btn.className = 'btn ' + (isLimpo ? 'btn-success' : 'btn-danger');
+  btn.style.fontSize = '12px';
+  btn.textContent = isLimpo ? '✓ Limpo' : '⏳ Pendente';
+  updateGovStats();
+  const pend = Object.values(limpezaState).filter(v => v === 'pendente').length;
+  document.getElementById('limpBadge').textContent = pend + ' pendente' + (pend !== 1 ? 's' : '');
+}
+
+function updateGovStats() {
+  const limpos = Object.values(limpezaState).filter(v => v === 'limpo').length;
+  const pend   = Object.values(limpezaState).filter(v => v === 'pendente').length;
+  document.getElementById('govLimpos').textContent = limpos;
+  document.getElementById('govPend').textContent   = pend;
+}
+
+// Fechar modal clicando fora
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
