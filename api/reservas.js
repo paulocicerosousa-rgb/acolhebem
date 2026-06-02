@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'Base de Reservas!A:P',
+        range: 'Base de Reservas!A:R'
       });
       const rows = (response.data.values || []).slice(1);
       const reservas = rows.filter(r => r && r[1]).map((r, i) => ({
@@ -31,6 +31,8 @@ module.exports = async (req, res) => {
         checkout: r[12] || '',
         status: r[13] || '',
         dataProposta: r[14] || '',
+        telefone: r[16] || '',
+        cidade: r[17] || '',
       }));
       return res.status(200).json({ success: true, data: reservas });
     }
@@ -44,17 +46,28 @@ module.exports = async (req, res) => {
       const nextId = (resp2.data.values || []).length;
       const hoje = new Date().toLocaleDateString('pt-BR');
       const linha = [
-        nextId, body.hospede||'', body.valorDiaria||'',
-        body.valorEntrada||'', body.formaPagamento||'',
-        body.valorTotal||'', body.tipoCama||'',
-        body.quarto||'', body.adultos||'',
-        body.criancas||'', body.observacoes||'',
-        body.checkin||'', body.checkout||'',
-        body.status||'Reservado', hoje, '',
-      ];
+  nextId,
+  body.hospede || '',
+  body.valorDiaria || '',
+  body.valorEntrada || '',
+  body.formaPagamento || '',
+  body.valorTotal || '',
+  body.tipoCama || '',
+  body.quarto || '',
+  body.adultos || '',
+  body.criancas || '',
+  body.observacoes || '',
+  body.checkin || '',
+  body.checkout || '',
+  body.status || 'Reservado',
+  hoje,
+  '',
+  body.telefone || '',
+  body.cidade || ''
+];
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'Base de Reservas!A:P',
+        range: 'Base de Reservas!A:R',
         valueInputOption: 'USER_ENTERED',
         resource: { values: [linha] },
       });
