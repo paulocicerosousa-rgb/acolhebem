@@ -714,20 +714,23 @@ async function salvarReserva(e) {
   const diaria = parseFloat(document.getElementById('valorDiaria').value) || 0;
 
   const reserva = {
-    hospede,
-    quarto,
-    checkin: fmtBR(checkin),
-    checkout: fmtBR(checkout),
-    tipoCama: document.getElementById('tipoCama').value,
-    adultos: document.getElementById('adultos').value,
-    criancas: document.getElementById('criancas').value,
-    status: document.getElementById('status').value,
-    valorDiaria: diaria || '',
-    valorEntrada: document.getElementById('valorEntrada').value || '',
-    formaPagamento: document.getElementById('formaPagamento').value,
-    valorTotal: diaria > 0 ? noites * diaria : '',
-    observacoes: document.getElementById('observacoes').value,
-  };
+  hospede,
+  telefone: document.getElementById('telefone').value,
+  cidade: document.getElementById('cidade').value,
+
+  quarto,
+  checkin: fmtBR(checkin),
+  checkout: fmtBR(checkout),
+  tipoCama: document.getElementById('tipoCama').value,
+  adultos: document.getElementById('adultos').value,
+  criancas: document.getElementById('criancas').value,
+  status: document.getElementById('status').value,
+  valorDiaria: diaria || '',
+  valorEntrada: document.getElementById('valorEntrada').value || '',
+  formaPagamento: document.getElementById('formaPagamento').value,
+  valorTotal: diaria > 0 ? noites * diaria : '',
+  observacoes: document.getElementById('observacoes').value,
+};
 
   try {
     const resp = await fetch(API + '/api/reservas', {
