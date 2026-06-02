@@ -160,70 +160,113 @@ tr:hover td{background:#fafafa}
 .toast.show{transform:translateY(0)}
 .toast.success{background:var(--green)}
 .toast.error{background:var(--red)}
-/* ==========================================
-   🖨️ CONFIGURAÇÃO DE IMPRESSÃO DA LISTA
-   ========================================== */
+/* Configuracao estrita de impressao sem caracteres especiais */
 @media print {
-  /* Esconde o menu lateral, o topo e a barra de pesquisa */
-  .sidebar, .topbar, .search-bar, .form-footer, button, .btn { 
-    display: none !important; 
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    display: block !important;
   }
   
-  /* Força o conteúdo a ocupar a página inteira com fundo branco */
-  body, .main, .page.active, .content { 
-    display: block !important; 
-    overflow: visible !important; 
-    width: 100% !important; 
-    height: auto !important; 
-    background: #fff !important; 
-    color: #000 !important;
+  /* Oculta completamente o menu, topo, filtros e cards de resumo */
+  .sidebar, 
+  .topbar, 
+  .search-bar, 
+  .form-footer, 
+  .cards-grid, 
+  button, 
+  .btn,
+  .logo-area,
+  .nav,
+  .hotel-badge {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
   }
-
-  /* Organiza os cards de resumo (Adultos/Crianças) lado a lado no papel */
-  .cards-grid.cards-3 { 
-    display: flex !important; 
-    gap: 15px !important; 
-    margin-bottom: 20px !important; 
+  
+  /* Forca a area principal a assumir largura total na folha */
+  .main {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
   }
   
-  .card { 
-    flex: 1 !important; 
-    border: 1px solid #ccc !important; 
-    background: #fff !important;
-    box-shadow: none !important;
-  }
-
-  /* Ajusta a tabela para cobrir toda a largura da folha */
-  .table-wrap { 
-    border: 1px solid #ccc !important; 
-    box-shadow: none !important;
+  .page {
+    display: none !important;
   }
   
-  table { 
-    width: 100% !important; 
+  .page.active {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   
-  th { 
-    background: #f5f5f5 !important; 
-    color: #000 !important; 
-    border-bottom: 2px solid #000 !important; 
-    text-transform: uppercase;
+  .content {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   
-  td { 
-    border-bottom: 1px solid #ccc !important; 
+  /* Formata a secao e a tabela do cafe para o papel */
+  .cafe-section {
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-
-  /* Simplifica os badges coloridos para preto e branco na impressão */
-  .badge { 
-    border: 1px solid #999 !important; 
-    background: transparent !important; 
-    color: #000 !important; 
+  
+  .cafe-section-header {
+    font-size: 16px !important;
     font-weight: bold !important;
+    color: #000000 !important;
+    margin-bottom: 15px !important;
+    background: transparent !important;
+    padding: 0 !important;
   }
-}  
+  
+  .table-wrap {
+    width: 100% !important;
+    border: 1px solid #000000 !important;
+    box-shadow: none !important;
+  }
+  
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  
+  th, td {
+    border: 1px solid #000000 !important;
+    padding: 10px !important;
+    color: #000000 !important;
+    font-size: 13px !important;
+  }
+  
+  th {
+    background: #f2f2f2 !important;
+    text-transform: uppercase !important;
+  }
+  
+  /* Padroniza os badges coloridos para bordas pretas legiveis */
+  .badge {
+    border: 1px solid #000000 !important;
+    background: transparent !important;
+    color: #000000 !important;
+    font-weight: bold !important;
+    padding: 2px 6px !important;
+  }
+}
 </style>
 </head>
 <body>
