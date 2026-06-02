@@ -529,6 +529,31 @@ async function salvarReserva(e) {
     return;
   }
 
+  // ==========================================
+  // 🛡️ TRAVA DE SEGURANÇA CONTRA OVERBOOKING
+  // ==========================================
+  try {
+    // Consulta a planilha para ver se o quarto está livre nessas datas
+    const respCheck = await fetch(`${API}/api/disponibilidade?checkin=${checkin}&checkout=${checkout}`);
+    const dataCheck = await respCheck.json();
+
+    if (dataCheck.success) {
+      // Procura o quarto que a recepcionista selecionou
+      const quartoSelecionado = dataCheck.quartos.find(q => String(q.quarto) === String(quarto));
+      
+      // Se achar o quarto e o status não for LIVRE, bloqueia a reserva!
+      if (quartoSelecionado && quartoSelecionado.status !== 'LIVRE') {
+        showToast(`⚠️ OVERBOOKING: O Quarto ${quarto} já está reservado neste período!`, 'error');
+        return; // O 'return' para a função aqui e impede o salvamento
+      }
+    }
+  } catch (err) {
+    console.error('Erro na trava de segurança:', err);
+    showToast('Erro ao verificar disponibilidade. Tente novamente.', 'error');
+    return;
+  }
+  // ==========================================
+
   const ci = new Date(checkin), co = new Date(checkout);
   const noites = Math.round((co - ci) / 86400000);
   const diaria = parseFloat(document.getElementById('valorDiaria').value) || 0;
