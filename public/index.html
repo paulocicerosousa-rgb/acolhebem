@@ -530,21 +530,20 @@ async function salvarReserva(e) {
   }
 
   // ==========================================
-  // 🛡️ TRAVA DE SEGURANÇA CONTRA OVERBOOKING
+  // 🛡️ TRAVA DE SEGURANÇA CONTRA OVERBOOKING (BLINDADA)
   // ==========================================
   try {
-    // Consulta a planilha para ver se o quarto está livre nessas datas
-    const respCheck = await fetch(`${API}/api/disponibilidade?checkin=${checkin}&checkout=${checkout}`);
+    // O Date.now() no final garante que o navegador nunca use o cache antigo
+    const respCheck = await fetch(`${API}/api/disponibilidade?checkin=${checkin}&checkout=${checkout}&_=${Date.now()}`);
     const dataCheck = await respCheck.json();
 
     if (dataCheck.success) {
-      // Procura o quarto que a recepcionista selecionou
-      const quartoSelecionado = dataCheck.quartos.find(q => String(q.quarto) === String(quarto));
+      // O .trim() garante que espaços extras não quebrem a comparação do quarto
+      const quartoSelecionado = dataCheck.quartos.find(q => String(q.quarto).trim() === String(quarto).trim());
       
-      // Se achar o quarto e o status não for LIVRE, bloqueia a reserva!
       if (quartoSelecionado && quartoSelecionado.status !== 'LIVRE') {
         showToast(`⚠️ OVERBOOKING: O Quarto ${quarto} já está reservado neste período!`, 'error');
-        return; // O 'return' para a função aqui e impede o salvamento
+        return;
       }
     }
   } catch (err) {
@@ -593,7 +592,6 @@ async function salvarReserva(e) {
     console.error(err);
   }
 }
-
 // ===== PESQUISA =====
 document.addEventListener('DOMContentLoaded', () => {
   const ci = document.getElementById('pesqCheckin');
