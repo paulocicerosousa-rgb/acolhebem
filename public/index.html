@@ -637,15 +637,26 @@ async function salvarReserva(e) {
   }
 
   // ==========================================
+  // 📅 VALIDAÇÃO DE DATAS RETROATIVAS
+  // ==========================================
+  const hojeStr = hoje();
+  if (checkin < hojeStr) {
+    showToast('⚠️ Erro: A data de check-in não pode ser anterior a hoje!', 'error');
+    return;
+  }
+  if (checkout <= checkin) {
+    showToast('⚠️ Erro: A data de check-out deve ser posterior ao check-in!', 'error');
+    return;
+  }
+
+  // ==========================================
   // 🛡️ TRAVA DE SEGURANÇA CONTRA OVERBOOKING (BLINDADA)
   // ==========================================
   try {
-    // O Date.now() no final garante que o navegador nunca use o cache antigo
     const respCheck = await fetch(`${API}/api/disponibilidade?checkin=${checkin}&checkout=${checkout}&_=${Date.now()}`);
     const dataCheck = await respCheck.json();
 
     if (dataCheck.success) {
-      // O .trim() garante que espaços extras não quebrem a comparação do quarto
       const quartoSelecionado = dataCheck.quartos.find(q => String(q.quarto).trim() === String(quarto).trim());
       
       if (quartoSelecionado && quartoSelecionado.status !== 'LIVRE') {
@@ -699,8 +710,70 @@ async function salvarReserva(e) {
     console.error(err);
   }
 }
+  } catch (err) {
+    console.error('Erro na trava de segurança:', err);
+    showToast('Erro ao verificar disponibilidade. Tente novamente.', 'error');
+    return;
+  }
+  // ==========================================
+
+  const ci = new Date(checkin), co = new Date(checkout);
+  const noites = Math.round((co - ci) / 86400000);
+  const diaria = parseFloat(document.getElementById('valorDiaria').value) || 0;
+
+  const reserva = {
+    hospede,
+    quarto,
+    checkin: fmtBR(checkin),
+    checkout: fmtBR(checkout),
+    tipoCama: document.getElementById('tipoCama').value,
+    adultos: document.getElementById('adultos').value,
+    criancas: document.getElementById('criancas').value,
+    status: document.getElementById('status').value,
+    valorDiaria: diaria || '',
+    valorEntrada: document.getElementById('valorEntrada').value || '',
+    formaPagamento: document.getElementById('formaPagamento').value,
+    valorTotal: diaria > 0 ? noites * diaria : '',
+    observacoes: document.getElementById('observacoes').value,
+  };
+
+  try {
+    const resp = await fetch(API + '/api/reservas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reserva),
+    });
+    const data = await resp.json();
+
+    if (data.success) {
+      showToast('✅ Reserva #' + data.id + ' criada com sucesso!');
+      limparFormulario();
+    } else {
+      showToast('Erro ao salvar: ' + (data.error || 'Tente novamente'), 'error');
+    }
+  } catch (err) {
+    showToast('Erro de conexão com a planilha', 'error');
+    console.error(err);
+  }
+}
 // ===== PESQUISA =====
 document.addEventListener('DOMContentLoaded', () => {
+  // Bloquear datas passadas nativamente no formulário de Nova Reserva
+  const campoCheckin = document.getElementById('checkin');
+  const campoCheckout = document.getElementById('checkout');
+  
+  if (campoCheckin && campoCheckout) {
+    campoCheckin.min = hoje();
+    campoCheckout.min = hoje();
+    
+    // Alinha dinamicamente o check-out mínimo de acordo com o check-in escolhido
+    campoCheckin.addEventListener('change', () => {
+      if (campoCheckin.value) {
+        campoCheckout.min = campoCheckin.value;
+      }
+    });
+  }
+
   const ci = document.getElementById('pesqCheckin');
   const co = document.getElementById('pesqCheckout');
   const upd = () => {
@@ -718,9 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('cafeData').value = hoje();
 
   // Atualiza nome do hotel
-  document.getElementById('hotelNome').textContent = 'Meu Hotel';
-});
-
+  document.getElementById('hotelNome').textContent = 'Meu Hotel';});
 async function pesquisarDisponibilidade() {
   const ci = document.getElementById('pesqCheckin').value;
   const co = document.getElementById('pesqCheckout').value;
