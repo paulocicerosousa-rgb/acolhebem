@@ -71,7 +71,44 @@ module.exports = async (req, res) => {
         valueInputOption: 'USER_ENTERED',
         resource: { values: [linha] },
       });
-      return res.status(201).json({ success: true, message: 'Reserva criada!', id: nextId });
+      // BUSCAR HÓSPEDES
+const respHospedes = await sheets.spreadsheets.values.get({
+  spreadsheetId: SPREADSHEET_ID,
+  range: 'Hospedes!A:G',
+});
+
+const hospedes = (respHospedes.data.values || []).slice(1);
+      const hospedeExiste = hospedes.find(h =>
+  String(h[1] || '').trim().toLowerCase() ===
+  String(body.hospede || '').trim().toLowerCase()
+);
+      if (!hospedeExiste) {
+
+  const novoHospedeId = hospedes.length + 1;
+
+  await sheets.spreadsheets.values.append({
+  spreadsheetId: SPREADSHEET_ID,
+  range: 'Hospedes!A:G',
+  valueInputOption: 'USER_ENTERED',
+  resource: {
+    values: [[
+      novoHospedeId,
+      body.hospede || '',
+      body.telefone || '',
+      body.cidade || '',
+      '',
+      hoje,
+      1
+    ]]
+  }
+});
+
+}
+return res.status(201).json({
+  success: true,
+  message: 'Reserva criada!',
+  id: nextId
+});
     }
 
     return res.status(405).json({ error: 'Método não permitido' });
