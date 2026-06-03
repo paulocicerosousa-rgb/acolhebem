@@ -282,7 +282,14 @@ tr:hover td{background:#fafafa}
   <div class="nav">
     <div class="nav-section">Reservas</div>
     <div class="nav-item active" onclick="showPage('nova-reserva')"><i class="ti ti-calendar-plus"></i> Nova Reserva</div>
-    <div class="nav-item" onclick="showPage('pesquisa')"><i class="ti ti-search"></i> Pesquisa de Reserva</div>
+    <div class="nav-item" onclick="showPage('pesquisa')">
+      <div class="nav-section">Hóspedes</div>
+
+<div class="nav-item" onclick="showPage('hospedes')">
+    <i class="ti ti-users"></i>
+    Pesquisa de Hóspedes
+</div>
+      <i class="ti ti-search"></i> Pesquisa de Reserva</div>
     <div class="nav-item" onclick="showPage('mapa')"><i class="ti ti-layout-grid"></i> Mapa de Ocupação</div>
     <div class="nav-section">Alimentação</div>
     <div class="nav-item" onclick="showPage('cafe')"><i class="ti ti-coffee"></i> Café da Manhã</div>
@@ -489,7 +496,45 @@ tr:hover td{background:#fafafa}
       <div class="sum-item"><div class="sum-dot" style="background:#ef9a9a"></div><span id="sumOcupados">0 ocupados</span></div>
     </div>
   </div>
+<div class="page" id="page-hospedes">
 
+    <div class="topbar">
+        <div>
+            <div class="topbar-title">Pesquisa de Hóspedes</div>
+            <div class="topbar-sub">Consulte hóspedes cadastrados</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <input
+                type="text"
+                id="filtroHospede"
+                placeholder="Digite o nome do hóspede..."
+                onkeyup="filtrarHospedes()"
+                style="width:100%;padding:10px;margin-bottom:15px;"
+            >
+
+            <table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>Cidade</th>
+            <th>Hospedagens</th>
+        </tr>
+    </thead>
+    <tbody id="tabelaHospedes">
+        <tr>
+            <td colspan="4">Carregando hóspedes...</td>
+        </tr>
+    </tbody>
+</table>
+        </div>
+    </div>
+
+</div>
   <!-- ===== MAPA ===== -->
   <div class="page" id="page-mapa">
     <div class="topbar">
@@ -606,7 +651,8 @@ function showPage(id) {
   if (id === 'governanca') carregarGovernanca();
   if (id === 'cafe') { document.getElementById('cafeData').value = hoje(); carregarCafe(); }
 }
-
+  
+if (id === 'hospedes') carregarHospedes();
 // ===== UTILS =====
 function hoje() {
   return new Date().toISOString().split('T')[0];
@@ -1266,6 +1312,65 @@ function updateGovStats() {
 document.getElementById('modalOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
+  async function carregarHospedes() {
+    try {
+
+        const resp = await fetch(API + '/api/hospedes');
+        const json = await resp.json();
+
+        const tbody = document.getElementById('tabelaHospedes');
+
+        if (!json.success) {
+            tbody.innerHTML =
+                '<tr><td colspan="4">Erro ao carregar hóspedes</td></tr>';
+            return;
+        }
+
+        let html = '';
+
+        json.data.forEach(h => {
+            html += `
+                <tr>
+                    <td>${h.nome || ''}</td>
+                    <td>${h.telefone || ''}</td>
+                    <td>${h.cidade || ''}</td>
+                    <td>${h.totalHospedagem || 0}</td>
+                </tr>
+            `;
+        });
+
+        if (html === '') {
+            html =
+                '<tr><td colspan="4">Nenhum hóspede encontrado</td></tr>';
+        }
+
+        tbody.innerHTML = html;
+
+    } catch (err) {
+        console.error(err);
+
+        document.getElementById('tabelaHospedes').innerHTML =
+            '<tr><td colspan="4">Erro ao carregar hóspedes</td></tr>';
+    }
+}
+
+function filtrarHospedes() {
+
+    const filtro = document
+        .getElementById('filtroHospede')
+        .value
+        .toLowerCase();
+
+    const linhas = document.querySelectorAll('#tabelaHospedes tr');
+
+    linhas.forEach(linha => {
+
+        const texto = linha.textContent.toLowerCase();
+
+        linha.style.display =
+            texto.includes(filtro) ? '' : 'none';
+    });
+}
 </script>
 </body>
 </html>
