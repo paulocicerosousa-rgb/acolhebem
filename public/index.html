@@ -672,16 +672,30 @@ const API = 'https://acolhebem-delta.vercel.app'
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  event.currentTarget && event.currentTarget.classList.add('active');
 
-  // Carregar dados ao entrar na página
-  if (id === 'mapa') renderMapa();
-  if (id === 'governanca') carregarGovernanca();
-  if (id === 'cafe') { document.getElementById('cafeData').value = hoje(); carregarCafe(); }
+  document.getElementById('page-' + id).classList.add('active');
+
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+  }
+
+  if (id === 'mapa') {
+    renderMapa();
+  }
+
+  if (id === 'governanca') {
+    carregarGovernanca();
+  }
+
+  if (id === 'cafe') {
+    document.getElementById('cafeData').value = hoje();
+    carregarCafe();
+  }
+
+  if (id === 'hospedes') {
+    carregarHospedes();
+  }
 }
-  
-if (id === 'hospedes') carregarHospedes();
 // ===== UTILS =====
 function hoje() {
   return new Date().toISOString().split('T')[0];
