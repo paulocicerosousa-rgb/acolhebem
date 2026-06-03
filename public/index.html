@@ -279,27 +279,62 @@ tr:hover td{background:#fafafa}
     <div class="logo-name">AcolheBem</div>
     <div class="logo-sub">Gestão Hoteleira</div>
   </div>
+  
   <div class="nav">
     <div class="nav-section">Reservas</div>
 
-<div class="nav-item active" onclick="showPage('nova-reserva')">
-    <i class="ti ti-calendar-plus"></i> Nova Reserva
+    <div class="nav-item active" onclick="showPage('nova-reserva')">
+      <i class="ti ti-calendar-plus"></i> Nova Reserva
+    </div>
+
+    <div class="nav-item" onclick="showPage('pesquisa')">
+      <i class="ti ti-search"></i> Pesquisa de Reserva
+    </div>
+
+    <div class="nav-item" onclick="showPage('mapa')">
+      <i class="ti ti-layout-grid"></i> Mapa de Ocupação
+    </div>
+
+    <div class="nav-section">Hóspedes</div>
+
+    <div class="nav-item" onclick="showPage('hospedes')">
+      <i class="ti ti-users"></i> Pesquisa de Hóspedes
+    </div>
+
+    <div class="nav-section">Alimentação</div>
+
+    <div class="nav-item" onclick="showPage('cafe')">
+      <i class="ti ti-coffee"></i> Café da Manhã
+    </div>
+
+    <div class="nav-section">Operação</div>
+
+    <div class="nav-item" onclick="showPage('governanca')">
+      <i class="ti ti-brush"></i> Governança
+    </div>
+
+    <div class="nav-section">Relatórios</div>
+
+    <div class="nav-item" onclick="showPage('relatorios')">
+      <i class="ti ti-chart-bar"></i> Relatórios
+    </div>
+
+    <div class="nav-section">RH</div>
+
+    <div class="nav-item" onclick="showPage('ponto')">
+      <i class="ti ti-fingerprint"></i> Ponto Eletrônico
+    </div>
+  </div>
+
+  <div class="hotel-badge">
+    <div class="hotel-nm" id="hotelNome">Hotel</div>
+    <div class="hotel-pl">AcolheBem</div>
+  </div>
+
 </div>
 
-<div class="nav-item" onclick="showPage('pesquisa')">
-    <i class="ti ti-search"></i> Pesquisa de Reserva
-</div>
-
-<div class="nav-section">Hóspedes</div>
-
-<div class="nav-item" onclick="showPage('hospedes')">
-    <i class="ti ti-users"></i> Pesquisa de Hóspedes
-</div>
-
-<div class="nav-item" onclick="showPage('mapa')">
-    <i class="ti ti-layout-grid"></i> Mapa de Ocupação
-</div>
 <!-- MAIN -->
+
 <div class="main">
 
   <!-- ===== NOVA RESERVA ===== -->
