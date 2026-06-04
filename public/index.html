@@ -1403,8 +1403,29 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
             '<tr><td colspan="4">Erro ao carregar hóspedes</td></tr>';
     }
 }
-  function editarHospede(id) {
-    alert('ID do hóspede: ' + id);
+  async function editarHospede(id) {
+
+    const resp = await fetch(API + '/api/hospedes');
+
+    const json = await resp.json();
+
+    const hospede = json.data.find(h => h.id == id);
+
+    if (!hospede) {
+        alert('Hóspede não encontrado');
+        return;
+    }
+
+    document.getElementById('hospedeNome').value =
+        hospede.nome || '';
+
+    document.getElementById('hospedeTelefone').value =
+        hospede.telefone || '';
+
+    document.getElementById('hospedeCidade').value =
+        hospede.cidade || '';
+
+    abrirModalHospede();
 }
 
 function filtrarHospedes() {
