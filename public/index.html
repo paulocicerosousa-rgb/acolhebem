@@ -1506,23 +1506,19 @@ function filtrarHospedes() {
         .value
         .toLowerCase();
 
-    ...
-}
-function filtrarHospedes() {
-
-    const filtro = document
-        .getElementById('filtroHospede')
-        .value
-        .toLowerCase();
-
-    const linhas = document.querySelectorAll('#tabelaHospedes tr');
+       const linhas = document.querySelectorAll(
+         '#tabelaHospedes tr
+         ');
 
     linhas.forEach(linha => {
 
-        const texto = linha.textContent.toLowerCase();
+        const texto 
+          = linha.textContent.toLowerCase();
 
         linha.style.display =
-            texto.includes(filtro) ? '' : 'none';
+            texto.includes(filtro)
+          ? ''
+          : 'none';
     });
 }
 </script>
