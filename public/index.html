@@ -1437,6 +1437,77 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
         'modalEditarHospede'
     ).style.display = 'none';
 }
+  async function salvarEdicaoHospede() {
+
+    const id =
+        document.getElementById('editarId').value;
+
+    const nome =
+        document.getElementById('editarNome').value;
+
+    const telefone =
+        document.getElementById('editarTelefone').value;
+
+    const cidade =
+        document.getElementById('editarCidade').value;
+
+    try {
+
+        const resp = await fetch(
+            API + '/api/hospedes',
+            {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id,
+                    nome,
+                    telefone,
+                    cidade
+                })
+            }
+        );
+
+        const json = await resp.json();
+
+        if (json.success) {
+
+            showToast(
+                'Hóspede atualizado com sucesso!'
+            );
+
+            fecharModalHospede();
+
+            carregarHospedes();
+
+        } else {
+
+            alert(
+                json.message ||
+                'Erro ao atualizar hóspede'
+            );
+        }
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert(
+            'Erro ao salvar alterações'
+        );
+    }
+}
+
+function filtrarHospedes() {
+
+    const filtro = document
+        .getElementById('filtroHospede')
+        .value
+        .toLowerCase();
+
+    ...
+}
 function filtrarHospedes() {
 
     const filtro = document
