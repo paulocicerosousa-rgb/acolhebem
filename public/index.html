@@ -1381,9 +1381,9 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
     <td>${h.totalHospedagem || 0}</td>
     <td style="min-width:120px">
         <button class="btn btn-secondary"
-                onclick="alert('teste')">
-            ✏️ Editar
-        </button>
+        onclick="editarHospede('${h.id}')">
+    ✏️ Editar
+</button>
     </td>
 </tr>
 `;       
@@ -1406,26 +1406,29 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
   async function editarHospede(id) {
 
     const resp = await fetch(API + '/api/hospedes');
-
     const json = await resp.json();
 
-    const hospede = json.data.find(h => h.id == id);
+    const hospede = json.data.find(
+        h => String(h.id) === String(id)
+    );
 
     if (!hospede) {
         alert('Hóspede não encontrado');
         return;
     }
 
-    document.getElementById('hospedeNome').value =
+    showPage('nova-reserva');
+
+    document.getElementById('hospede').value =
         hospede.nome || '';
 
-    document.getElementById('hospedeTelefone').value =
+    document.getElementById('telefone').value =
         hospede.telefone || '';
 
-    document.getElementById('hospedeCidade').value =
+    document.getElementById('cidade').value =
         hospede.cidade || '';
 
-    abrirModalHospede();
+    showToast('Hóspede carregado para edição');
 }
 
 function filtrarHospedes() {
