@@ -1417,20 +1417,26 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
         return;
     }
 
-    showPage('nova-reserva');
+    document.getElementById('editarId').value =
+        hospede.id;
 
-    document.getElementById('hospede').value =
+    document.getElementById('editarNome').value =
         hospede.nome || '';
 
-    document.getElementById('telefone').value =
+    document.getElementById('editarTelefone').value =
         hospede.telefone || '';
 
-    document.getElementById('cidade').value =
+    document.getElementById('editarCidade').value =
         hospede.cidade || '';
 
-    showToast('Hóspede carregado para edição');
+    document.getElementById('modalEditarHospede').style.display = 'block';
 }
+  function fecharModalHospede() {
 
+    document.getElementById(
+        'modalEditarHospede'
+    ).style.display = 'none';
+}
 function filtrarHospedes() {
 
     const filtro = document
@@ -1449,5 +1455,55 @@ function filtrarHospedes() {
     });
 }
 </script>
+<div id="modalEditarHospede"
+     style="display:none;
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:rgba(0,0,0,.5);
+            z-index:9999;">
+
+  <div style="
+      background:#fff;
+      width:500px;
+      margin:60px auto;
+      padding:20px;
+      border-radius:10px;">
+
+      <h3>Editar Hóspede</h3>
+
+      <input type="hidden" id="editarId">
+
+      <div class="field">
+          <label>Nome</label>
+          <input type="text" id="editarNome">
+      </div>
+
+      <div class="field">
+          <label>Telefone</label>
+          <input type="text" id="editarTelefone">
+      </div>
+
+      <div class="field">
+          <label>Cidade</label>
+          <input type="text" id="editarCidade">
+      </div>
+
+      <div style="margin-top:15px">
+          <button class="btn btn-primary"
+                  onclick="salvarEdicaoHospede()">
+              Salvar
+          </button>
+
+          <button class="btn btn-secondary"
+                  onclick="fecharModalHospede()">
+              Cancelar
+          </button>
+      </div>
+
+  </div>
+</div>  
 </body>
 </html>
