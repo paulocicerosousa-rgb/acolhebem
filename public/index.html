@@ -349,81 +349,107 @@ tr:hover td{background:#fafafa}
     <div class="content" style="overflow-y:auto">
       <form id="formReserva" onsubmit="salvarReserva(event)">
 
-        <div class="form-section">
-          <div class="form-section-header"><i class="ti ti-door"></i><span class="form-section-title">Dados da Estadia</span></div>
-          <div class="form-body">
-            <div class="form-grid cols-4">
-              <div class="field">
-                <label>Check-in <span class="required">*</span></label>
-                <input type="date" id="checkin" required onchange="calcTotal()">
-              </div>
-              <div class="field">
-                <label>Check-out <span class="required">*</span></label>
-                <input type="date" id="checkout" required onchange="calcTotal()">
-              </div>
-              <div class="field">
-                <label>Quarto <span class="required">*</span></label>
-                <select id="quarto" required>
-                  <option value="">Selecione</option>
-                  <option>1</option><option>2</option><option>3</option><option>4</option>
-                  <option>5</option><option>6</option><option>7</option><option>8</option>
-                  <option>9</option><option>10</option><option>11</option><option>12</option>
-                  <option>14</option><option>15</option><option>16</option><option>17</option>
-                  <option>18</option><option>19</option><option>20</option><option>21</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>Tipo de Cama</label>
-                <select id="tipoCama">
-                  <option>1 casal</option><option>1 solteiro</option><option>2 solteiros</option>
-                  <option>1 casal e 1 solteiro</option><option>3 solteiros</option><option>4 solteiros</option>
-                </select>
-              </div>
-            </div>
-            <div id="nightsPill"></div>
-            <div class="form-grid cols-4" style="margin-top:12px">
-              <div class="field">
-                <label>Adultos</label>
-                <input type="number" id="adultos" min="1" value="2">
-              </div>
-              <div class="field">
-                <label>Crianças</label>
-                <input type="number" id="criancas" min="0" value="0">
-              </div>
-              <div class="field">
-                <label>Bebês</label>
-                <input type="number" id="bebes" min="0" value="0">
-              </div>
-              <div class="field">
-                <label>Status <span class="required">*</span></label>
-                <select id="status">
-                  <option>Reservado</option><option>Liquidado</option>
-                  <option>Cortesia</option><option>Pré-Reserva</option>
-                </select>
-              </div>
-            </div>
+        <!-- 🎨 Ajustes Visuais: Letras maiores e campos numéricos compactos -->
+    <style>
+      #formReserva label {
+        font-size: 14px !important; 
+        font-weight: 600 !important;
+      }
+      #formReserva input, #formReserva select, #formReserva textarea {
+        font-size: 15px !important;
+        padding: 8px 12px !important;
+      }
+      /* Impede que os campos de quantidade fiquem gigantes */
+      .input-curto {
+        max-width: 100px !important;
+      }
+      #formReserva .form-body {
+        gap: 12px !important;
+      }
+      #formReserva .form-section {
+        margin-bottom: 20px !important;
+      }
+    </style>
+
+    <!-- ===== 1. DADOS DO HÓSPEDE (AGORA PRIMEIRO) ===== -->
+    <div class="form-section">
+      <div class="form-section-header"><i class="ti ti-user"></i><span class="form-section-title">Dados do Hóspede</span></div>
+      <div class="form-body">
+        <div class="form-grid cols-3">
+          <div class="field">
+            <label>Nome completo <span class="required">*</span></label>
+            <input type="text" id="hospede" placeholder="Ex: Maria Silva Santos" required>
+          </div>
+          <div class="field">
+            <label>WhatsApp / Telefone <span class="required">*</span></label>
+            <input type="tel" id="telefone" placeholder="Ex: 85989888878" required>
+          </div>
+          <div class="field">
+            <label>Cidade</label>
+            <input type="text" id="cidade" placeholder="Ex: Fortaleza">
           </div>
         </div>
-
-       <div class="form-section">
-  <div class="form-section-header"><i class="ti ti-user"></i><span class="form-section-title">Dados do Hóspede</span></div>
-  <div class="form-body">
-    <div class="form-grid cols-3">
-      <div class="field">
-        <label>Nome completo <span class="required">*</span></label>
-        <input type="text" id="hospede" placeholder="Ex: Maria Silva Santos" required>
-      </div>
-      <div class="field">
-        <label>WhatsApp / Telefone <span class="required">*</span></label>
-        <input type="tel" id="telefone" placeholder="Ex: 85989888878" required>
-      </div>
-      <div class="field">
-        <label>Cidade</label>
-        <input type="text" id="cidade" placeholder="Ex: Fortaleza">
       </div>
     </div>
-  </div>
-</div>
+
+    <!-- ===== 2. DADOS DA ESTADIA (AGORA SEGUNDO) ===== -->
+    <div class="form-section">
+      <div class="form-section-header"><i class="ti ti-door"></i><span class="form-section-title">Dados da Estadia</span></div>
+      <div class="form-body">
+        <div class="form-grid cols-4">
+          <div class="field">
+            <label>Check-in <span class="required">*</span></label>
+            <input type="date" id="checkin" required onchange="calcTotal()">
+          </div>
+          <div class="field">
+            <label>Check-out <span class="required">*</span></label>
+            <input type="date" id="checkout" required onchange="calcTotal()">
+          </div>
+          <div class="field">
+            <label>Quarto <span class="required">*</span></label>
+            <select id="quarto" required>
+              <option value="">Selecione</option>
+              <option>1</option><option>2</option><option>3</option><option>4</option>
+              <option>5</option><option>6</option><option>7</option><option>8</option>
+              <option>9</option><option>10</option><option>11</option><option>12</option>
+              <option>14</option><option>15</option><option>16</option><option>17</option>
+              <option>18</option><option>19</option><option>20</option><option>21</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Tipo de Cama</label>
+            <select id="tipoCama">
+              <option>1 casal</option><option>1 solteiro</option><option>2 solteiros</option>
+              <option>1 casal e 1 solteiro</option><option>3 solteiros</option><option>4 solteiros</option>
+            </select>
+          </div>
+        </div>
+        
+        <div id="nightsPill"></div>
+        
+        <div class="form-grid cols-4" style="margin-top:12px">
+          <div class="field">
+            <label>Adultos</label>
+            <input type="number" id="adultos" min="1" value="2" class="input-curto">
+          </div>
+          <div class="field">
+            <label>Crianças</label>
+            <input type="number" id="criancas" min="0" value="0" class="input-curto">
+          </div>
+          <div class="field">
+            <label>Bebês</label>
+            <input type="number" id="bebes" min="0" value="0" class="input-curto">
+          </div>
+          <div class="field">
+            <label>Status <span class="required">*</span></label>
+            <select id="status">
+              <option>Reservado</option><option>Liquidado</option>
+              <option>Cortesia</option><option>Pré-Reserva</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
 <div class="form-section">
           <div class="form-section-header"><i class="ti ti-currency-dollar"></i><span class="form-section-title">Financeiro</span></div>
           <div class="form-body">
