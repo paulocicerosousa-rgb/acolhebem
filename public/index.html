@@ -727,19 +727,18 @@ function limparFormulario() {
 async function salvarReserva(e) {
   if (e) e.preventDefault();
 
-  const hospede = document.getElementById('hospede').value.trim();
-  const quarto  = document.getElementById('quarto').value;
-  const checkin = document.getElementById('checkin').value;
-  const checkout= document.getElementById('checkout').value;
+  const hospede  = document.getElementById('hospede').value.trim();
+  const telefone = document.getElementById('telefone').value.trim();
+  const quarto   = document.getElementById('quarto').value;
+  const checkin  = document.getElementById('checkin').value;
+  const checkout = document.getElementById('checkout').value;
 
-  if (!hospede || !quarto || !checkin || !checkout) {
+  if (!hospede || !telefone || !quarto || !checkin || !checkout) {
     showToast('Preencha os campos obrigatórios!', 'error');
     return;
   }
 
-  // ==========================================
   // 📅 VALIDAÇÃO DE DATAS RETROATIVAS
-  // ==========================================
   const hojeStr = hoje();
   if (checkin < hojeStr) {
     showToast('⚠️ Erro: A data de check-in não pode ser anterior a hoje!', 'error');
@@ -750,9 +749,7 @@ async function salvarReserva(e) {
     return;
   }
 
-  // ==========================================
   // 🛡️ TRAVA DE SEGURANÇA CONTRA OVERBOOKING (BLINDADA)
-  // ==========================================
   try {
     const respCheck = await fetch(`${API}/api/disponibilidade?checkin=${checkin}&checkout=${checkout}&_=${Date.now()}`);
     const dataCheck = await respCheck.json();
@@ -770,30 +767,31 @@ async function salvarReserva(e) {
     showToast('Erro ao verificar disponibilidade. Tente novamente.', 'error');
     return;
   }
-  // ==========================================
 
   const ci = new Date(checkin), co = new Date(checkout);
   const noites = Math.round((co - ci) / 86400000);
   const diaria = parseFloat(document.getElementById('valorDiaria').value) || 0;
+  const totalCalculado = diaria > 0 ? noites * diaria : 0;
+
+  // Guarda o telefone de forma inteligente no início das observações
+  const obsCampo = document.getElementById('observacoes').value.trim();
+  const observacoesFinal = `[Whats: ${telefone}] ${obsCampo}`.trim();
 
   const reserva = {
-  hospede,
-  telefone: document.getElementById('telefone').value,
-  cidade: document.getElementById('cidade').value,
-
-  quarto,
-  checkin: fmtBR(checkin),
-  checkout: fmtBR(checkout),
-  tipoCama: document.getElementById('tipoCama').value,
-  adultos: document.getElementById('adultos').value,
-  criancas: document.getElementById('criancas').value,
-  status: document.getElementById('status').value,
-  valorDiaria: diaria || '',
-  valorEntrada: document.getElementById('valorEntrada').value || '',
-  formaPagamento: document.getElementById('formaPagamento').value,
-  valorTotal: diaria > 0 ? noites * diaria : '',
-  observacoes: document.getElementById('observacoes').value,
-};
+    hospede,
+    quarto,
+    checkin: fmtBR(checkin),
+    checkout: fmtBR(checkout),
+    tipoCama: document.getElementById('tipoCama').value,
+    adultos: document.getElementById('adultos').value,
+    criancas: document.getElementById('criancas').value,
+    status: document.getElementById('status').value,
+    valorDiaria: diaria || '',
+    valorEntrada: document.getElementById('valorEntrada').value || '',
+    formaPagamento: document.getElementById('formaPagamento').value,
+    valorTotal: totalCalculado || '',
+    observacoes: observacoesFinal,
+  };
 
   try {
     const resp = await fetch(API + '/api/reservas', {
@@ -805,6 +803,10 @@ async function salvarReserva(e) {
 
     if (data.success) {
       showToast('✅ Reserva #' + data.id + ' criada com sucesso!');
+      
+      // 🚀 DISPARAR WHATSAPP AUTOMATICAMENTE APÓS SALVAR
+      enviarWhatsApp(hospede, telefone, quarto, checkin, checkout, totalCalculado);
+      
       limparFormulario();
     } else {
       showToast('Erro ao salvar: ' + (data.error || 'Tente novamente'), 'error');
@@ -815,6 +817,30 @@ async function salvarReserva(e) {
   }
 }
 
+// 📱 FUNÇÃO QUE MONTA E ABRE O LINK DO WHATSAPP
+function enviarWhatsApp(hospede, telefone, quarto, checkin, checkout, total) {
+  let numeroLimpo = telefone.replace(/\D/g, '');
+  
+  // Se não tiver o código do país (55), adiciona automaticamente
+  if (numeroLimpo.length === 10 || numeroLimpo.length === 11) {
+    numeroLimpo = '55' + numeroLimpo;
+  }
+
+  const valorFormatado = total > 0 
+    ? 'R$ ' + total.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) 
+    : 'A combinar';
+
+  const textoMensagem = `Olá, *${hospede}*! Tudo bem? 🌟\n\n` +
+    `Sua reserva no *AcolheBem* está confirmada! Seguem os detalhes da sua estadia:\n\n` +
+    `🛏️ *Quarto:* ${quarto}\n` +
+    `📅 *Check-in:* ${fmtBR(checkin)}\n` +
+    `📅 *Check-out:* ${fmtBR(checkout)}\n` +
+    `💰 *Valor Total:* ${valorFormatado}\n\n` +
+    `Já estamos preparando tudo para receber você com muito carinho! Se tiver alguma dúvida, é só responder por aqui. Até logo! 👋`;
+
+  const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroLimpo}&text=${encodeURIComponent(textoMensagem)}`;
+  window.open(urlWhatsApp, '_blank');
+}
 // ===== PESQUISA =====
 document.addEventListener('DOMContentLoaded', () => {
   // Bloquear datas passadas nativamente no formulário de Nova Reserva
