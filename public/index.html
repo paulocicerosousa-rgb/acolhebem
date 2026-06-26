@@ -771,7 +771,21 @@ function calcTotal() {
   pill.innerHTML = '';
   totalEl.textContent = 'R$ —';
 }
-
+function loginComGoogle() {
+  // 🔓 Remove a tela de login da frente
+  const telaLogin = document.getElementById('page-login');
+  if (telaLogin) {
+    telaLogin.style.setProperty('display', 'none', 'important');
+  }
+  
+  // 🚀 Ativa o painel principal de reservas
+  const painelReserva = document.getElementById('page-nova-reserva');
+  if (painelReserva) {
+    painelReserva.classList.add('active');
+  }
+  
+  showToast('🎉 Login realizado com sucesso! (Modo de Teste)');
+}
 function limparFormulario() {
   document.getElementById('formReserva').reset();
   document.getElementById('nightsPill').innerHTML = '';
