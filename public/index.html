@@ -772,22 +772,35 @@ function calcTotal() {
   pill.innerHTML = '';
   totalEl.textContent = 'R$ —';
 }
-function loginComGoogle() {
-  // 🔓 Remove a tela de login da frente
-  const telaLogin = document.getElementById('page-login');
-  if (telaLogin) {
-    telaLogin.style.setProperty('display', 'none', 'important');
+// Função que será chamada automaticamente assim que o usuário escolher a conta Google
+function manipularLoginGoogle(resposta) {
+  // O Google envia um token encriptado seguro com os dados do usuário
+  const dadosToken = JSON.parse(atob(resposta.credential.split('.')[1]));
+  const emailLogado = dadosToken.email;
+
+  console.log("Usuário tentando entrar com o e-mail:", emailLogado);
+
+  // 🔒 PASSO FUTURO: Aqui a sua 'api' vai validar na planilha se este e-mail está ativo.
+  if (emailLogado) {
+    // Esconde a tela de login
+    document.getElementById('page-login').style.setProperty('display', 'none', 'important');
+    // Ativa o painel principal do AcolheBem
+    document.getElementById('page-nova-reserva').classList.add('active');
+    
+    showToast(`Olá, ${dadosToken.name}! Acesso liberado com sucesso.`);
   }
-  
-  // 🚀 Ativa o painel principal de reservas
-  const painelReserva = document.getElementById('page-nova-reserva');
-  if (painelReserva) {
-    painelReserva.classList.add('active');
-  }
-  
-  showToast('🎉 Login realizado com sucesso! (Modo de Teste)');
 }
-function limparFormulario() {
+
+// Função que é executada ao clicar no botão do Google
+function loginComGoogle() {
+  google.accounts.id.initialize({
+    client_id: "SEU_CLIENT_ID_DO_GOOGLE.apps.googleusercontent.com", // Vamos gerar esta chave no próximo passo
+    callback: manipularLoginGoogle
+  });
+  
+  // Abre a janela oficial flutuante do Google na tela
+  google.accounts.id.prompt(); 
+}function limparFormulario() {
   document.getElementById('formReserva').reset();
   document.getElementById('nightsPill').innerHTML = '';
   document.getElementById('valorTotal').textContent = 'R$ —';
