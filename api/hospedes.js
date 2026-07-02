@@ -1,24 +1,27 @@
-const { getSheets, SPREADSHEET_ID } = require('./_sheets');
+const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   try {
-    const sheets = await getSheets();
+    // 🌐 Captura o e-mail do hotel logado (via Header, Query String ou Body)
+    const email = req.headers['x-user-email'] || req.query.email || (req.body && req.body.email);
 
-    // =========================
-    // LISTAR HÓSPEDES
-    // =========================
+    // 🧭 Roteamento inteligente: descobre qual planilha deve abrir
+    const spreadsheetId = await obterPlanilhaIdPorEmail(email);
+
+    // ==========================================
+    // 1. LISTAR HÓSPEDES
+    // ==========================================
     if (req.method === 'GET') {
-
       const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: spreadsheetId,
         range: 'Hospedes!A:G',
       });
 
@@ -40,20 +43,18 @@ module.exports = async (req, res) => {
       });
     }
 
-    // =========================
-    // CADASTRAR HÓSPEDE
-    // =========================
+    // ==========================================
+    // 2. CADASTRAR HÓSPEDE
+    // ==========================================
     if (req.method === 'POST') {
-
       const body = req.body;
 
       const resp = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: spreadsheetId,
         range: 'Hospedes!A:A',
       });
 
       const nextId = (resp.data.values || []).length;
-
       const hoje = new Date().toLocaleDateString('pt-BR');
 
       const linha = [
@@ -67,7 +68,7 @@ module.exports = async (req, res) => {
       ];
 
       await sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: spreadsheetId,
         range: 'Hospedes!A:G',
         valueInputOption: 'USER_ENTERED',
         resource: {
@@ -81,15 +82,14 @@ module.exports = async (req, res) => {
       });
     }
 
-    // =========================
-    // EDITAR HÓSPEDE
-    // =========================
+    // ==========================================
+    // 3. EDITAR HÓSPEDE
+    // ==========================================
     if (req.method === 'PUT') {
-
       const body = req.body;
 
       const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: spreadsheetId,
         range: 'Hospedes!A:G',
       });
 
@@ -107,7 +107,7 @@ module.exports = async (req, res) => {
       }
 
       await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: spreadsheetId,
         range: `Hospedes!A${linhaIndex + 1}:G${linhaIndex + 1}`,
         valueInputOption: 'USER_ENTERED',
         resource: {
@@ -126,7 +126,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         success: true,
         message: 'Hóspede atualizado com sucesso!'
-      });
+          });
     }
 
     return res.status(405).json({
@@ -134,11 +134,9 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       error: error.message
     });
-
   }
 };
