@@ -1,4 +1,4 @@
-const { getSheets, SPREADSHEET_ID } = require('./_sheets');
+const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
 
 function parseDateBR(str) {
   if (!str) return null;
@@ -12,17 +12,23 @@ function parseDateBR(str) {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
     const { data } = req.query;
     if (!data) return res.status(400).json({ error: 'Informe a data' });
 
+    // 🌐 Captura o e-mail do hotel logado (via Header, Query String ou Body)
+    const email = req.headers['x-user-email'] || req.query.email || (req.body && req.body.email);
+
+    // 🧭 Roteamento inteligente: descobre qual planilha deve abrir
+    const spreadsheetId = await obterPlanilhaIdPorEmail(email);
+
     const dtConsulta = new Date(data);
-    const sheets = await getSheets();
+    
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: spreadsheetId,
       range: 'Base de Reservas!A:N',
     });
 
