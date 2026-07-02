@@ -1,4 +1,4 @@
-const { getSheets, SPREADSHEET_ID } = require('./_sheets');
+const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
 const QUARTOS = [1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18,19,20,21];
 
 function parseDateBR(str) {
@@ -13,18 +13,24 @@ function parseDateBR(str) {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
     const { checkin, checkout } = req.query;
     if (!checkin || !checkout) return res.status(400).json({ error: 'Informe checkin e checkout' });
 
+    // 🌐 Captura o e-mail do hotel logado (via Header, Query String ou Body)
+    const email = req.headers['x-user-email'] || req.query.email || (req.body && req.body.email);
+
+    // 🧭 Roteamento inteligente: descobre qual planilha deve abrir
+    const spreadsheetId = await obterPlanilhaIdPorEmail(email);
+
     const dtCheckin = new Date(checkin);
     const dtCheckout = new Date(checkout);
-    const sheets = await getSheets();
+    
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
+      spreadsheetId: spreadsheetId,
       range: 'Base de Reservas!A:N',
     });
 
