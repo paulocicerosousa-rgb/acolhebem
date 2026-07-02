@@ -1,21 +1,27 @@
-const { getSheets, SPREADSHEET_ID } = require('./_sheets');
+const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   try {
-    const sheets = await getSheets();
+    // 🌐 Captura o e-mail do hotel logado (via Header, Query String ou Body)
+    const email = req.headers['x-user-email'] || req.query.email || (req.body && req.body.email);
 
-    // LISTAR RESERVAS
+    // 🧭 Roteamento inteligente: descobre qual planilha deve abrir
+    const spreadsheetId = await obterPlanilhaIdPorEmail(email);
+
+    // ==========================================
+    // 1. LISTAR RESERVAS
+    // ==========================================
     if (req.method === 'GET') {
       const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: spreadsheetId,
         range: 'Base de Reservas!A:R'
       });
 
@@ -49,12 +55,14 @@ module.exports = async (req, res) => {
       });
     }
 
-    // CRIAR RESERVA
+    // ==========================================
+    // 2. CRIAR RESERVA
+    // ==========================================
     if (req.method === 'POST') {
       const body = req.body;
 
       const resp = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: spreadsheetId,
         range: 'Base de Reservas!A:A'
       });
 
@@ -82,56 +90,55 @@ module.exports = async (req, res) => {
         body.cidade || ''
       ];
 
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: spreadsheetId,
+        range: 'Base de Reservas!A:R',
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: [linha]
+            }
+      });
+
+      // VERIFICA SE O HÓSPEDE JÁ EXISTE NA PLANILHA DESTE HOTEL
+      const respHospedes = await sheets.spreadsheets.values.get({
+        spreadsheetId: spreadsheetId,
+        range: 'Hospedes!A:G'
+      });
+
+      const hospedes = (respHospedes.data.values || []).slice(1);
+
+      const hospedeExiste = hospedes.find(h =>
+        String(h[1] || '').trim().toLowerCase() ===
+        String(body.hospede || '').trim().toLowerCase()
+      );
+
+      // SE NÃO EXISTIR, CADASTRA NO BANCO ISOLADO DELES
+      if (!hospedeExiste) {
+        const novoHospedeId = hospedes.length + 1;
+
         await sheets.spreadsheets.values.append({
-  spreadsheetId: SPREADSHEET_ID,
-  range: 'Base de Reservas!A:R',
-  valueInputOption: 'USER_ENTERED',
-  resource: {
-    values: [linha]
-  }
-});
+          spreadsheetId: spreadsheetId,
+          range: 'Hospedes!A:G',
+          valueInputOption: 'USER_ENTERED',
+          resource: {
+            values: [[
+              novoHospedeId,
+              body.hospede || '',
+              body.telefone || '',
+              body.cidade || '',
+              '',
+              hoje,
+              1
+            ]]
+          }
+        });
+      }
 
-// VERIFICA SE O HÓSPEDE JÁ EXISTE
-const respHospedes = await sheets.spreadsheets.values.get({
-  spreadsheetId: SPREADSHEET_ID,
-  range: 'Hospedes!A:G'
-});
-
-const hospedes = (respHospedes.data.values || []).slice(1);
-
-const hospedeExiste = hospedes.find(h =>
-  String(h[1] || '').trim().toLowerCase() ===
-  String(body.hospede || '').trim().toLowerCase()
-);
-
-// SE NÃO EXISTIR, CADASTRA
-if (!hospedeExiste) {
-
-  const novoHospedeId = hospedes.length + 1;
-
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: 'Hospedes!A:G',
-    valueInputOption: 'USER_ENTERED',
-    resource: {
-      values: [[
-        novoHospedeId,
-        body.hospede || '',
-        body.telefone || '',
-        body.cidade || '',
-        '',
-        hoje,
-        1
-      ]]
-    }
-  });
-}
-
-return res.status(201).json({
-  success: true,
-  message: 'Reserva criada!',
-  id: nextId
-});
+      return res.status(201).json({
+        success: true,
+        message: 'Reserva criada!',
+        id: nextId
+      });
     }
 
     return res.status(405).json({
