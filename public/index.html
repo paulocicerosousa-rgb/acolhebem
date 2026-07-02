@@ -778,16 +778,21 @@ function manipularLoginGoogle(resposta) {
   const dadosToken = JSON.parse(atob(resposta.credential.split('.')[1]));
   const emailLogado = dadosToken.email;
 
-  console.log("Usuário tentando entrar com o e-mail:", emailLogado);
+  console.log("Usuário logado com sucesso:", emailLogado);
 
-  // 🔒 PASSO FUTURO: Aqui a sua 'api' vai validar na planilha se este e-mail está ativo.
   if (emailLogado) {
-    // Esconde a tela de login
+    // 💾 Guarda o e-mail com segurança no navegador do usuário
+    localStorage.setItem('AcolheBem_EmailHotel', emailLogado);
+
+    // Esconde a tela de login e ativa o painel principal
     document.getElementById('page-login').style.setProperty('display', 'none', 'important');
-    // Ativa o painel principal do AcolheBem
     document.getElementById('page-nova-reserva').classList.add('active');
     
     showToast(`Olá, ${dadosToken.name}! Acesso liberado com sucesso.`);
+
+    // 🔄 CHAMADA CRUCIAL: Atualiza o painel trazendo apenas as reservas DESTE hotel
+    if (typeof listarReservas === 'function') listarReservas();
+    if (typeof atualizarDisponibilidade === 'function') atualizarDisponibilidade();
   }
 }
 
@@ -833,7 +838,11 @@ async function salvarReserva(e) {
 
   // 🛡️ TRAVA DE SEGURANÇA CONTRA OVERBOOKING (BLINDADA)
   try {
-    const respCheck = await fetch(`${API}/api/disponibilidade?checkin=${checkin}&checkout=${checkout}&_=${Date.now()}`);
+    const respCheck = await fetch(`${API}/api/disponibilidade?checkin=${checkin}&checkout=${checkout}&_=${Date.now()}`, {
+  headers: {
+    'x-user-email': localStorage.getItem('AcolheBem_EmailHotel') || ''
+  }
+});
     const dataCheck = await respCheck.json();
 
     if (dataCheck.success) {
@@ -876,9 +885,12 @@ async function salvarReserva(e) {
   };
 
   try {
-    const resp = await fetch(API + '/api/reservas', {
+   const resp = await fetch(API + '/api/reservas', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-user-email': localStorage.getItem('AcolheBem_EmailHotel') || '' // 🧭 Direciona para a planilha certa
+      },
       body: JSON.stringify(reserva),
     });
     const data = await resp.json();
@@ -970,7 +982,11 @@ async function pesquisarDisponibilidade() {
   area.innerHTML = '<div class="loading"><i class="ti ti-loader ti-spin"></i>Verificando disponibilidade...</div>';
 
   try {
-    const resp = await fetch(`${API}/api/disponibilidade?checkin=${ci}&checkout=${co}`);
+    const resp = await fetch(`${API}/api/disponibilidade?checkin=${ci}&checkout=${co}`, {
+  headers: {
+    'x-user-email': localStorage.getItem('AcolheBem_EmailHotel') || ''
+  }
+});
     const data = await resp.json();
 
     if (!data.success) throw new Error(data.error);
@@ -1071,7 +1087,11 @@ async function renderMapa() {
 
   // Busca reservas
   try {
-    const resp = await fetch(API + '/api/reservas');
+    const resp = await fetch(API + '/api/reservas', {
+  headers: {
+    'x-user-email': localStorage.getItem('AcolheBem_EmailHotel') || ''
+  }
+});
     const data = await resp.json();
     if (data.success) reservasCache = data.data;
   } catch(e) { console.error(e); }
@@ -1171,7 +1191,11 @@ async function carregarCafe() {
   area.innerHTML = '<div class="loading"><i class="ti ti-loader ti-spin"></i>Carregando...</div>';
 
   try {
-    const resp = await fetch(`${API}/api/cafe?data=${data}`);
+    const resp = await fetch(`${API}/api/cafe?data=${data}`, {
+  headers: {
+    'x-user-email': localStorage.getItem('AcolheBem_EmailHotel') || ''
+  }
+});
     const d = await resp.json();
     if (!d.success) throw new Error(d.error);
 
@@ -1229,7 +1253,11 @@ async function carregarProjecao7Dias() {
       d.setDate(d.getDate() + i);
       const dataStr = d.toISOString().split('T')[0];
       datas.push(dataStr);
-      promessas.push(fetch(`${API}/api/cafe?data=${dataStr}`).then(r => r.json()));
+      promessas.push(fetch(`${API}/api/cafe?data=${dataStr}`, {
+  headers: {
+    'x-user-email': localStorage.getItem('AcolheBem_EmailHotel') || ''
+  }
+}).then(r => r.json()));
     }
 
     const resultados = await Promise.all(promessas);
@@ -1313,7 +1341,11 @@ async function carregarGovernanca() {
   document.getElementById('govDataPill').textContent = `${dias[dt.getDay()]}, ${dt.getDate()} de ${meses[dt.getMonth()]}`;
 
   try {
-    const resp = await fetch(API + '/api/reservas');
+    const resp = await fetch(API + '/api/reservas', {
+  headers: {
+    'x-user-email': localStorage.getItem('AcolheBem_EmailHotel') || ''
+  }
+});
     const data = await resp.json();
     if (!data.success) throw new Error();
 
@@ -1444,7 +1476,11 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
   async function carregarHospedes() {
     try {
 
-        const resp = await fetch(API + '/api/hospedes');
+        const resp = await fetch(API + '/api/hospedes', {
+  headers: {
+    'x-user-email': localStorage.getItem('AcolheBem_EmailHotel') || ''
+  }
+});
         const json = await resp.json();
 
         const tbody = document.getElementById('tabelaHospedes');
@@ -1490,7 +1526,11 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 }
   async function editarHospede(id) {
 
-    const resp = await fetch(API + '/api/hospedes');
+   const resp = await fetch(API + '/api/hospedes', {
+  headers: {
+    'x-user-email': localStorage.getItem('AcolheBem_EmailHotel') || ''
+  }
+});
     const json = await resp.json();
 
     const hospede = json.data.find(
@@ -1539,20 +1579,21 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
     try {
 
         const resp = await fetch(
-            API + '/api/hospedes',
-            {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id,
-                    nome,
-                    telefone,
-                    cidade
-                })
-            }
-        );
+      API + '/api/hospedes',
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': localStorage.getItem('AcolheBem_EmailHotel') || '' // 🧭 Passaporte do hotel
+        },
+        body: JSON.stringify({
+          id,
+          nome,
+          telefone,
+          cidade
+        })
+      }
+    );  
 
         const json = await resp.json();
 
