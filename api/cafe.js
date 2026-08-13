@@ -1,71 +1,46 @@
-const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
+const {
+  AppError, configureResponse, getRequestEmail, getSheets,
+  obterPlanilhaIdPorEmail, sendError,
+} = require('./_sheets');
 
-function parseDateBR(str) {
-  if (!str) return null;
-  if (str.includes('/')) {
-    const [d,m,y] = str.split('/');
-    return new Date(`${y}-${m}-${d}`);
-  }
-  return new Date(str);
+function parseDateBR(value) {
+  if (!value) return null;
+  const text = String(value).trim();
+  const parts = text.includes('/') ? text.split('/').reverse() : text.split('-');
+  if (parts.length !== 3) return null;
+  const date = new Date(Date.UTC(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-
+  if (configureResponse(req, res, ['GET'])) return;
   try {
-    const { data } = req.query;
-    if (!data) return res.status(400).json({ error: 'Informe a data' });
-
-    // 🌐 Captura o e-mail do hotel logado (via Header, Query String ou Body)
-    const email = req.headers['x-user-email'] || req.query.email || (req.body && req.body.email);
-
-    // 🧭 Roteamento inteligente: descobre qual planilha deve abrir
+    if (req.method !== 'GET') throw new AppError(405, 'METHOD_NOT_ALLOWED', 'Método não permitido.');
+    const queryDate = parseDateBR(req.query.data);
+    if (!queryDate) throw new AppError(400, 'INVALID_DATE', 'Informe uma data válida.');
+    const email = getRequestEmail(req);
     const spreadsheetId = await obterPlanilhaIdPorEmail(email);
-
-    const dtConsulta = new Date(data);
-    
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: spreadsheetId,
-      range: 'Base de Reservas!A:N',
-    });
-
-    const rows = (response.data.values || []).slice(1);
-    const hospedes = rows
-      .filter(r => {
-        if (!r[1]) return false;
-        if (r[13] === 'Expirado') return false;
-        const ci = parseDateBR(r[11]);
-        const co = parseDateBR(r[12]);
-        if (!ci || !co) return false;
-        return ci < dtConsulta && co >= dtConsulta;
-      })
-      .map(r => ({
-        hospede: r[1],
-        quarto: r[7],
-        adultos: parseInt(r[8]) || 0,
-        criancas: parseInt(r[9]) || 0,
-        status: r[13],
-      }))
-      .sort((a,b) => Number(a.quarto) - Number(b.quarto));
-
-    const totalAdultos = hospedes.reduce((s,h) => s+h.adultos, 0);
-    const totalCriancas = hospedes.reduce((s,h) => s+h.criancas, 0);
-
+    const sheets = getSheets();
+    const response = await sheets.spreadsheets.values.get({ spreadsheetId, range: 'Base de Reservas!A:N' });
+    const guests = (response.data.values || []).slice(1).filter(row => {
+      if (!row[1] || ['Expirado', 'Cancelado'].includes(String(row[13] || '').trim())) return false;
+      const start = parseDateBR(row[11]);
+      const end = parseDateBR(row[12]);
+      return start && end && start <= queryDate && end > queryDate;
+    }).map(row => ({
+      hospede: row[1], quarto: row[7], adultos: Number.parseInt(row[8], 10) || 0,
+      criancas: Number.parseInt(row[9], 10) || 0, status: row[13],
+    })).sort((a, b) => Number(a.quarto) - Number(b.quarto));
+    const totalAdultos = guests.reduce((sum, guest) => sum + guest.adultos, 0);
+    const totalCriancas = guests.reduce((sum, guest) => sum + guest.criancas, 0);
     return res.status(200).json({
-      success: true,
-      data,
-      resumo: {
-        totalAdultos,
-        totalCriancas,
-        totalGeral: totalAdultos + totalCriancas,
-        totalQuartos: hospedes.length,
-      },
-      hospedes,
+      success: true, data: req.query.data,
+      resumo: { totalAdultos, totalCriancas, totalGeral: totalAdultos + totalCriancas, totalQuartos: guests.length },
+      hospedes: guests,
     });
   } catch (error) {
-    return res.status(500).json({ error: 'Erro interno', details: error.message });
+    return sendError(res, error);
   }
 };
+
+module.exports._test = { parseDateBR };
