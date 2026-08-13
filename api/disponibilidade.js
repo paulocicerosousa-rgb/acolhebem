@@ -1,65 +1,54 @@
-const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
+const {
+  AppError, configureResponse, getRequestEmail, getSheets,
+  obterPlanilhaIdPorEmail, sendError,
+} = require('./_sheets');
+
 const QUARTOS = [1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18,19,20,21];
 
-function parseDateBR(str) {
-  if (!str) return null;
-  if (str.includes('/')) {
-    const [d,m,y] = str.split('/');
-    return new Date(`${y}-${m}-${d}`);
-  }
-  return new Date(str);
+function parseDateBR(value) {
+  if (!value) return null;
+  const text = String(value).trim();
+  const parts = text.includes('/') ? text.split('/').reverse() : text.split('-');
+  if (parts.length !== 3) return null;
+  const date = new Date(Date.UTC(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-
+  if (configureResponse(req, res, ['GET'])) return;
   try {
+    if (req.method !== 'GET') throw new AppError(405, 'METHOD_NOT_ALLOWED', 'Método não permitido.');
     const { checkin, checkout } = req.query;
-    if (!checkin || !checkout) return res.status(400).json({ error: 'Informe checkin e checkout' });
-
-    // 🌐 Captura o e-mail do hotel logado (via Header, Query String ou Body)
-    const email = req.headers['x-user-email'] || req.query.email || (req.body && req.body.email);
-
-    // 🧭 Roteamento inteligente: descobre qual planilha deve abrir
+    const dtCheckin = parseDateBR(checkin);
+    const dtCheckout = parseDateBR(checkout);
+    if (!dtCheckin || !dtCheckout || dtCheckout <= dtCheckin) {
+      throw new AppError(400, 'INVALID_DATE_RANGE', 'O check-out deve ser posterior ao check-in.');
+    }
+    const email = getRequestEmail(req);
     const spreadsheetId = await obterPlanilhaIdPorEmail(email);
-
-    const dtCheckin = new Date(checkin);
-    const dtCheckout = new Date(checkout);
-    
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: spreadsheetId,
-      range: 'Base de Reservas!A:N',
-    });
-
-    const rows = (response.data.values || []).slice(1);
-    const ativas = rows.filter(r => r[1] && r[13] !== 'Expirado');
-
-    const resultado = QUARTOS.map(quarto => {
-      const conflitos = ativas.filter(r => {
-        if (String(r[7]).trim() !== String(quarto)) return false;
-        const ci = parseDateBR(r[11]);
-        const co = parseDateBR(r[12]);
-        if (!ci || !co) return false;
-        return ci < dtCheckout && co > dtCheckin;
+    const sheets = getSheets();
+    const response = await sheets.spreadsheets.values.get({ spreadsheetId, range: 'Base de Reservas!A:N' });
+    const rows = (response.data.values || []).slice(1).filter(row => row[1] && !['Expirado', 'Cancelado'].includes(String(row[13] || '').trim()));
+    const quartos = QUARTOS.map(quarto => {
+      const conflict = rows.find(row => {
+        if (String(row[7]).trim() !== String(quarto)) return false;
+        const start = parseDateBR(row[11]);
+        const end = parseDateBR(row[12]);
+        return start && end && start < dtCheckout && end > dtCheckin;
       });
-      if (conflitos.length === 0) return { quarto, status: 'LIVRE' };
-      const c = conflitos[0];
-      return { quarto, status: 'OCUPADO', hospede: c[1], checkin: c[11], checkout: c[12], tipoCama: c[6], adultos: c[8], statusReserva: c[13] };
+      return conflict ? {
+        quarto, status: 'OCUPADO', hospede: conflict[1], checkin: conflict[11],
+        checkout: conflict[12], tipoCama: conflict[6], adultos: conflict[8], statusReserva: conflict[13],
+      } : { quarto, status: 'LIVRE' };
     });
-
     return res.status(200).json({
       success: true,
-      resumo: {
-        livres: resultado.filter(r => r.status === 'LIVRE').length,
-        ocupados: resultado.filter(r => r.status === 'OCUPADO').length,
-        total: QUARTOS.length
-      },
-      quartos: resultado,
+      resumo: { livres: quartos.filter(q => q.status === 'LIVRE').length, ocupados: quartos.filter(q => q.status === 'OCUPADO').length, total: quartos.length },
+      quartos,
     });
   } catch (error) {
-    return res.status(500).json({ error: 'Erro interno', details: error.message });
+    return sendError(res, error);
   }
 };
+
+module.exports._test = { parseDateBR };

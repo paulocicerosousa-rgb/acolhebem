@@ -1,142 +1,58 @@
-const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
+const {
+  AppError, configureResponse, getRequestEmail, getSheets,
+  obterPlanilhaIdPorEmail, sendError,
+} = require('./_sheets');
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
+  if (configureResponse(req, res, ['GET', 'POST', 'PUT'])) return;
   try {
-    // 🌐 Captura o e-mail do hotel logado (via Header, Query String ou Body)
-    const email = req.headers['x-user-email'] || req.query.email || (req.body && req.body.email);
-
-    // 🧭 Roteamento inteligente: descobre qual planilha deve abrir
+    if (!['GET', 'POST', 'PUT'].includes(req.method)) {
+      throw new AppError(405, 'METHOD_NOT_ALLOWED', 'Método não permitido.');
+    }
+    const email = getRequestEmail(req);
     const spreadsheetId = await obterPlanilhaIdPorEmail(email);
+    const sheets = getSheets();
+    const response = await sheets.spreadsheets.values.get({ spreadsheetId, range: 'Hospedes!A:G' });
+    const allRows = response.data.values || [];
+    const rows = allRows.slice(1);
 
-    // ==========================================
-    // 1. LISTAR HÓSPEDES
-    // ==========================================
     if (req.method === 'GET') {
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: spreadsheetId,
-        range: 'Hospedes!A:G',
-      });
-
-      const rows = (response.data.values || []).slice(1);
-
-      const hospedes = rows.map((r, i) => ({
-        id: r[0] || i + 1,
-        nome: r[1] || '',
-        telefone: r[2] || '',
-        cidade: r[3] || '',
-        email: r[4] || '',
-        dataCadastro: r[5] || '',
-        totalHospedagem: r[6] || '0'
-      }));
-
       return res.status(200).json({
         success: true,
-        data: hospedes
+        data: rows.filter(row => row && row[1]).map((row, index) => ({
+          id: row[0] || index + 1,
+          nome: row[1] || '', telefone: row[2] || '', cidade: row[3] || '',
+          email: row[4] || '', dataCadastro: row[5] || '', totalHospedagem: row[6] || '0',
+        })),
       });
     }
 
-    // ==========================================
-    // 2. CADASTRAR HÓSPEDE
-    // ==========================================
+    const body = req.body || {};
+    if (!String(body.nome || '').trim()) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Nome do hóspede é obrigatório.');
+    }
+
     if (req.method === 'POST') {
-      const body = req.body;
-
-      const resp = await sheets.spreadsheets.values.get({
-        spreadsheetId: spreadsheetId,
-        range: 'Hospedes!A:A',
-      });
-
-      const nextId = (resp.data.values || []).length;
-      const hoje = new Date().toLocaleDateString('pt-BR');
-
-      const linha = [
-        nextId,
-        body.nome || '',
-        body.telefone || '',
-        body.cidade || '',
-        body.email || '',
-        hoje,
-        1
-      ];
-
+      const ids = rows.map(row => Number.parseInt(row[0], 10)).filter(Number.isFinite);
+      const nextId = ids.length ? Math.max(...ids) + 1 : 1;
+      const today = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Fortaleza' }).format(new Date());
       await sheets.spreadsheets.values.append({
-        spreadsheetId: spreadsheetId,
-        range: 'Hospedes!A:G',
-        valueInputOption: 'USER_ENTERED',
-        resource: {
-          values: [linha]
-        }
+        spreadsheetId, range: 'Hospedes!A:G', valueInputOption: 'USER_ENTERED',
+        resource: { values: [[nextId, body.nome, body.telefone || '', body.cidade || '', body.email || '', today, 1]] },
       });
-
-      return res.status(201).json({
-        success: true,
-        message: 'Hóspede cadastrado!'
-      });
+      return res.status(201).json({ success: true, message: 'Hóspede cadastrado.', id: nextId });
     }
 
-    // ==========================================
-    // 3. EDITAR HÓSPEDE
-    // ==========================================
-    if (req.method === 'PUT') {
-      const body = req.body;
-
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: spreadsheetId,
-        range: 'Hospedes!A:G',
-      });
-
-      const rows = response.data.values || [];
-
-      const linhaIndex = rows.findIndex(
-        row => String(row[0]) === String(body.id)
-      );
-
-      if (linhaIndex === -1) {
-        return res.status(404).json({
-          success: false,
-          message: 'Hóspede não encontrado'
-        });
-      }
-
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: spreadsheetId,
-        range: `Hospedes!A${linhaIndex + 1}:G${linhaIndex + 1}`,
-        valueInputOption: 'USER_ENTERED',
-        resource: {
-          values: [[
-            body.id,
-            body.nome || '',
-            body.telefone || '',
-            body.cidade || '',
-            body.email || '',
-            rows[linhaIndex][5] || '',
-            rows[linhaIndex][6] || '0'
-          ]]
-        }
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: 'Hóspede atualizado com sucesso!'
-          });
-    }
-
-    return res.status(405).json({
-      error: 'Método não permitido'
+    if (!body.id) throw new AppError(400, 'VALIDATION_ERROR', 'ID do hóspede é obrigatório.');
+    const rowIndex = allRows.findIndex(row => String(row[0]) === String(body.id));
+    if (rowIndex < 1) throw new AppError(404, 'GUEST_NOT_FOUND', 'Hóspede não encontrado.');
+    await sheets.spreadsheets.values.update({
+      spreadsheetId, range: `Hospedes!A${rowIndex + 1}:G${rowIndex + 1}`,
+      valueInputOption: 'USER_ENTERED',
+      resource: { values: [[body.id, body.nome, body.telefone || '', body.cidade || '', body.email || allRows[rowIndex][4] || '', allRows[rowIndex][5] || '', allRows[rowIndex][6] || '0']] },
     });
-
+    return res.status(200).json({ success: true, message: 'Hóspede atualizado.' });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    return sendError(res, error);
   }
 };

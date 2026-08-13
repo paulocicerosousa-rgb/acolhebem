@@ -2,6 +2,10 @@
   "name": "acolhebem",
   "version": "1.0.0",
   "description": "Plataforma de Gestão Hoteleira AcolheBem",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check api/_sheets.js && node --check api/reservas.js && node --check api/hospedes.js && node --check api/disponibilidade.js && node --check api/cafe.js"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
