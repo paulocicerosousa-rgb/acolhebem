@@ -815,7 +815,18 @@ function loginComGoogle() {
     }
   );
 }
-}function limparFormulario() {
+  document.addEventListener('DOMContentLoaded', function() {
+  function iniciarGoogle() {
+    if (window.google && google.accounts && google.accounts.id) {
+      loginComGoogle();
+    } else {
+      setTimeout(iniciarGoogle, 300);
+    }
+  }
+
+  iniciarGoogle();
+});
+function limparFormulario() {
   document.getElementById('formReserva').reset();
   document.getElementById('nightsPill').innerHTML = '';
   document.getElementById('valorTotal').textContent = 'R$ —';
