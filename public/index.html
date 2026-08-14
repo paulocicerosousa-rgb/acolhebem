@@ -924,8 +924,12 @@ async function salvarReserva(e) {
       
       limparFormulario();
     } else {
-      showToast('Erro ao salvar: ' + (data.error || 'Tente novamente'), 'error');
-    }
+  showToast(
+    'Erro ao salvar: ' + (data.details || data.error || 'Tente novamente'),
+    'error'
+  );
+  console.error('Erro detalhado:', data);
+}
   } catch (err) {
     showToast('Erro de conexão com a planilha', 'error');
     console.error(err);
