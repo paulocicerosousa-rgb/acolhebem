@@ -1,5 +1,15 @@
 const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
 
+// 🧹 Função para remover acentos, espaços extras e padronizar o nome
+function limparTexto(texto) {
+  return String(texto || '')
+    .normalize('NFD') // Separa as letras dos acentos
+    .replace(/[\u0300-\u036f]/g, '') // Remove os acentos
+    .replace(/\s+/g, ' ') // Transforma espaços duplos em um espaço só
+    .trim()
+    .toLowerCase();
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -96,29 +106,33 @@ module.exports = async (req, res) => {
         valueInputOption: 'USER_ENTERED',
         resource: {
           values: [linha]
-            }
+        }
       });
 
-      // VERIFICA SE O HÓSPEDE JÁ EXISTE NA PLANILHA DESTE HOTEL
+      // ==========================================
+      // MOTOR DO PROGRAMA DE RELACIONAMENTO
+      // ==========================================
+      
+      // Lê todos os dados até a coluna J
       const respHospedes = await sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
-        range: 'Hospedes!A:G'
+        range: 'Hospedes!A:J'
       });
 
       const hospedes = (respHospedes.data.values || []).slice(1);
 
-      const hospedeExiste = hospedes.find(h =>
-        String(h[1] || '').trim().toLowerCase() ===
-        String(body.hospede || '').trim().toLowerCase()
+      // 🧠 Busca inteligente ignorando acentos, maiúsculas e espaços duplos
+      const linhaIndex = hospedes.findIndex(h =>
+        limparTexto(h[1]) === limparTexto(body.hospede)
       );
 
-      // SE NÃO EXISTIR, CADASTRA NO BANCO ISOLADO DELES
-      if (!hospedeExiste) {
+      if (linhaIndex === -1) {
+        // HÓSPEDE NOVO: Cadastra do zero com 1 hospedagem
         const novoHospedeId = hospedes.length + 1;
 
         await sheets.spreadsheets.values.append({
           spreadsheetId: spreadsheetId,
-          range: 'Hospedes!A:G',
+          range: 'Hospedes!A:H',
           valueInputOption: 'USER_ENTERED',
           resource: {
             values: [[
@@ -126,9 +140,40 @@ module.exports = async (req, res) => {
               body.hospede || '',
               body.telefone || '',
               body.cidade || '',
-              '',
-              hoje,
-              1
+              '',     // Email
+              hoje,   // DataCadastro
+              1,      // TotalHospedagem (Inicia com 1)
+              hoje    // UltimaHospedagem
+            ]]
+          }
+        });
+      } else {
+        // HÓSPEDE RECORRENTE: Atualiza a contagem (+1)
+        const h = hospedes[linhaIndex];
+        const totalAnterior = parseInt(h[6]) || 0; // Coluna G
+        const novoTotal = totalAnterior + 1;
+        
+        // Se a reserva nova enviou telefone ou cidade, aproveitamos para atualizar o cadastro dele
+        const telefoneAtualizado = body.telefone || h[2] || '';
+        const cidadeAtualizada = body.cidade || h[3] || '';
+
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: spreadsheetId,
+          // A linha no Sheets é o index + 2 (pois index começa em 0 e a Linha 1 é o cabeçalho)
+          range: `Hospedes!A${linhaIndex + 2}:J${linhaIndex + 2}`,
+          valueInputOption: 'USER_ENTERED',
+          resource: {
+            values: [[
+              h[0] || '',             // ID 
+              h[1] || '',             // Nome
+              telefoneAtualizado,     // Telefone
+              cidadeAtualizada,       // Cidade
+              h[4] || '',             // Email
+              h[5] || '',             // DataCadastro
+              novoTotal,              // TotalHospedagem: Adiciona +1
+              hoje,                   // UltimaHospedagem: Atualiza para a data de hoje
+              h[8] || '',             // TotalGasto (preservado)
+              h[9] || ''              // Categoria (preservada)
             ]]
           }
         });
