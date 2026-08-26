@@ -12,7 +12,8 @@ function limparTexto(texto) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  // 👇 Aqui eu liberei a permissão para a rota PUT funcionar
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email');
 
   if (req.method === 'OPTIONS') {
@@ -112,8 +113,6 @@ module.exports = async (req, res) => {
       // ==========================================
       // MOTOR DO PROGRAMA DE RELACIONAMENTO
       // ==========================================
-      
-      // Lê todos os dados até a coluna J
       const respHospedes = await sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
         range: 'Hospedes!A:J'
@@ -127,7 +126,7 @@ module.exports = async (req, res) => {
       );
 
       if (linhaIndex === -1) {
-        // HÓSPEDE NOVO: Cadastra do zero com 1 hospedagem
+        // HÓSPEDE NOVO
         const novoHospedeId = hospedes.length + 1;
 
         await sheets.spreadsheets.values.append({
@@ -142,38 +141,36 @@ module.exports = async (req, res) => {
               body.cidade || '',
               '',     // Email
               hoje,   // DataCadastro
-              1,      // TotalHospedagem (Inicia com 1)
+              1,      // TotalHospedagem
               hoje    // UltimaHospedagem
             ]]
           }
         });
       } else {
-        // HÓSPEDE RECORRENTE: Atualiza a contagem (+1)
+        // HÓSPEDE RECORRENTE
         const h = hospedes[linhaIndex];
-        const totalAnterior = parseInt(h[6]) || 0; // Coluna G
+        const totalAnterior = parseInt(h[6]) || 0;
         const novoTotal = totalAnterior + 1;
         
-        // Se a reserva nova enviou telefone ou cidade, aproveitamos para atualizar o cadastro dele
         const telefoneAtualizado = body.telefone || h[2] || '';
         const cidadeAtualizada = body.cidade || h[3] || '';
 
         await sheets.spreadsheets.values.update({
           spreadsheetId: spreadsheetId,
-          // A linha no Sheets é o index + 2 (pois index começa em 0 e a Linha 1 é o cabeçalho)
           range: `Hospedes!A${linhaIndex + 2}:J${linhaIndex + 2}`,
           valueInputOption: 'USER_ENTERED',
           resource: {
             values: [[
-              h[0] || '',             // ID 
-              h[1] || '',             // Nome
-              telefoneAtualizado,     // Telefone
-              cidadeAtualizada,       // Cidade
-              h[4] || '',             // Email
-              h[5] || '',             // DataCadastro
-              novoTotal,              // TotalHospedagem: Adiciona +1
-              hoje,                   // UltimaHospedagem: Atualiza para a data de hoje
-              h[8] || '',             // TotalGasto (preservado)
-              h[9] || ''              // Categoria (preservada)
+              h[0] || '',             
+              h[1] || '',             
+              telefoneAtualizado,     
+              cidadeAtualizada,       
+              h[4] || '',             
+              h[5] || '',             
+              novoTotal,              
+              hoje,                   
+              h[8] || '',             
+              h[9] || ''              
             ]]
           }
         });
@@ -183,6 +180,44 @@ module.exports = async (req, res) => {
         success: true,
         message: 'Reserva criada!',
         id: nextId
+      });
+    }
+
+    // ==========================================
+    // 3. ATUALIZAR RESERVA (MUDAR STATUS)
+    // ==========================================
+    // 👇 Este é o bloco novo milimetricamente encaixado
+    if (req.method === 'PUT') {
+      const body = req.body;
+
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: spreadsheetId,
+        range: 'Base de Reservas!A:A'
+      });
+
+      const rows = response.data.values || [];
+      
+      const linhaIndex = rows.findIndex(row => String(row[0]) === String(body.id));
+
+      if (linhaIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: 'Reserva não encontrada'
+        });
+      }
+
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: spreadsheetId,
+        range: `Base de Reservas!N${linhaIndex + 1}`,
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: [[ body.status || 'Liquidado' ]]
+        }
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Status da reserva atualizado com sucesso!'
       });
     }
 
