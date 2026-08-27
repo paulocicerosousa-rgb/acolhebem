@@ -553,6 +553,26 @@ tr:hover td{background:#fafafa}
       <div class="sum-item"><div class="sum-dot" style="background:#ef9a9a"></div><span id="sumOcupados">0 ocupados</span></div>
     </div>
   </div>
+  <!-- PAINEL DE GESTÃO DE RESERVAS -->
+<div id="page-painel-reservas" class="page">
+  <h2>Painel de Reservas</h2>
+  <p>Acompanhe o status e confirme os pagamentos pendentes.</p>
+  
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Hóspede</th>
+        <th>Check-in</th>
+        <th>Quarto</th>
+        <th>Status</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody id="lista-reservas-body">
+      <!-- Preenchido via JavaScript -->
+    </tbody>
+  </table>
+</div>
 <div class="page" id="page-hospedes">
 
     <div class="topbar">
@@ -693,28 +713,7 @@ tr:hover td{background:#fafafa}
 
 <!-- TOAST -->
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
-
-<!-- PAINEL DE GESTÃO DE RESERVAS -->
-    <div id="page-painel-reservas" class="page">
-      <h2>Painel de Reservas</h2>
-      <p>Acompanhe o status e confirme os pagamentos pendentes.</p>
-      
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Hóspede</th>
-            <th>Check-in</th>
-            <th>Quarto</th>
-            <th>Status</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-        <tbody id="lista-reservas-body">
-          <!-- Preenchido via JavaScript -->
-        </tbody>
-      </table>
-    </div>
-  
+ 
 <script>
 const API = 'https://acolhebem-delta.vercel.app'
 
