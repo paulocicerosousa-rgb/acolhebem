@@ -403,7 +403,13 @@ tr:hover td{background:#fafafa}
         <div class="form-grid cols-3">
           <div class="field">
             <label>Nome completo <span class="required">*</span></label>
-            <input type="text" id="hospede" placeholder="Ex: Maria Silva Santos" required>
+            <input type="text" id="hospede" placeholder="Ex: Maria Silva Santos" required onblur="verificarCortesia()">
+
+<!-- AVISO DE CORTESIA (Fica escondido até o cliente bater a meta) -->
+<div id="alerta-cortesia" style="display: none; background-color: #d4edda; color: #155724; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #c3e6cb; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+  🎁 <b>CORTESIA DESBLOQUEADA!</b><br>
+  <span id="texto-cortesia">Este hóspede já possui X visitas cadastradas. Esta será a 10ª reserva!</span>
+</div>
           </div>
           <div class="field">
             <label>WhatsApp / Telefone <span class="required">*</span></label>
