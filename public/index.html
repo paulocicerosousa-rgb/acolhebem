@@ -1816,6 +1816,50 @@ async function liquidarReserva(id) {
     alert('Erro ao liquidar. Tente novamente.');
   }
 }
+ // ==========================================
+// MOTOR DO AVISO DE CORTESIA (FIDELIDADE)
+// ==========================================
+async function verificarCortesia() {
+  const campoNome = document.getElementById('hospede');
+  if (!campoNome) return;
+
+  const nomeDigitado = campoNome.value;
+  const alertaBox = document.getElementById('alerta-cortesia');
+  
+  if (!nomeDigitado.trim()) {
+    alertaBox.style.display = 'none';
+    return;
+  }
+
+  const emailHotel = localStorage.getItem('AcolheBem_EmailHotel') || '';
+
+  try {
+    const resp = await fetch(API + '/api/hospedes', {
+      headers: { 'x-user-email': emailHotel }
+    });
+    const json = await resp.json();
+
+    if (json.success) {
+      const limpar = (txt) => String(txt || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+      const hospedeEncontrado = json.data.find(h => limpar(h.nome) === limpar(nomeDigitado));
+
+      if (hospedeEncontrado) {
+        const visitas = parseInt(hospedeEncontrado.totalHospedagem) || 0;
+        
+        if (visitas >= 9) {
+          alertaBox.style.display = 'block';
+          document.getElementById('texto-cortesia').innerText = `Este hóspede possui ${visitas} visitas consolidadas. O próximo check-in vale uma recompensa!`;
+        } else {
+          alertaBox.style.display = 'none';
+        }
+      } else {
+        alertaBox.style.display = 'none';
+      }
+    }
+  } catch(err) {
+    console.error('Erro ao consultar fidelidade:', err);
+  }
+} 
 </script>
   
 </body>
