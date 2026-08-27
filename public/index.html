@@ -1544,20 +1544,21 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
         let html = '';
 
         json.data.forEach(h => {
-            html += `
-            <tr>
-    <td>${h.nome || ''}</td>
-    <td>${h.telefone || ''}</td>
-    <td>${h.cidade || ''}</td>
-    <td>${h.totalHospedagem || 0}</td>
-    <td style="min-width:120px">
-        <button class="btn btn-secondary"
-        onclick="editarHospede('${h.id}')">
-    ✏️ Editar
-</button>
-    </td>
-</tr>
-`;       
+        html += `
+        <tr>
+        <td>${h.nome || ''}</td>
+        <td>${h.telefone || ''}</td>
+        <td>${h.cidade || ''}</td>
+        <td>🌟 ${h.totalHospedagem || 0}</td>
+        <td style="min-width:120px">
+          <button class="btn btn-secondary"
+            onclick="editarHospede('${h.id}')">
+          ✏️ Editar
+          </button>
+        </td>
+        </tr>
+        `;
+      });
         });
 
         if (html === '') {
