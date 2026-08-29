@@ -1126,7 +1126,20 @@ async function renderMapa() {
   try {
     const data = await fetchJSON('/api/reservas');
     if (data.success) reservasCache = data.data;
-  } catch(e) { console.error(e); }
+  } catch(e) {
+    // Nunca apresentar quartos como livres quando a fonte de reservas falha.
+    // Isso evita que uma indisponibilidade de API provoque overbooking.
+    reservasCache = null;
+    const grid = document.getElementById('mapaGrid');
+    if (grid) {
+      grid.innerHTML = `<div class="loading" style="grid-column:1/-1;color:var(--red)">
+        <i class="ti ti-alert-circle"></i>
+        Não foi possível consultar as reservas. Não confirme novas reservas até a fonte ser restabelecida ou use o procedimento de contingência.
+      </div>`;
+    }
+    console.error('Mapa indisponível: fonte de reservas não respondeu', e);
+    return;
+  }
 
   // Stats hoje
   if (isCurrentMonth) {

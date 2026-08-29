@@ -34,3 +34,6 @@ Sem as credenciais, as APIs retornam `503 SHEETS_NOT_CONFIGURED` de forma contro
 - interface responsiva básica, logout local e ocultação de módulos inacabados.
 
 A autenticação por sessão e os perfis de hotel serão implementados em uma etapa posterior.
+# Piloto atual
+
+O primeiro ambiente de validação é o Hotel Escola do IFCE em Guaramiranga. Consulte [PILOTO_HOTEL_ESCOLA_IFCE.md](./PILOTO_HOTEL_ESCOLA_IFCE.md) para o escopo operacional, responsáveis e critérios do piloto.
