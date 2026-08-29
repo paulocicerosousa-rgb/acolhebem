@@ -338,13 +338,13 @@ tr:hover td{background:#fafafa}
 
     <div class="nav-section">Relatórios</div>
 
-    <div class="nav-item" onclick="showPage('relatorios')" style="display:none" aria-hidden="true">
+    <div class="nav-item" onclick="showPage('relatorios')" role="button" tabindex="0" aria-label="Relatórios">
       <i class="ti ti-chart-bar"></i> Relatórios
     </div>
 
     <div class="nav-section">RH</div>
 
-    <div class="nav-item" onclick="showPage('ponto')" style="display:none" aria-hidden="true">
+    <div class="nav-item" onclick="showPage('ponto')" style="display:none" aria-hidden="true" role="button" tabindex="0" aria-label="Ponto eletrônico">
       <i class="ti ti-fingerprint"></i> Ponto Eletrônico
     </div>
   </div>
@@ -699,7 +699,7 @@ tr:hover td{background:#fafafa}
       <div><div class="topbar-title">Relatório</div><div class="topbar-sub">Visão geral do desempenho</div></div>
     </div>
     <div class="content">
-      <div class="loading"><i class="ti ti-chart-bar"></i>Em construção — em breve disponível!</div>
+    <div id="relatoriosConteudo"><div class="loading"><i class="ti ti-chart-bar"></i>Carregando indicadores...</div></div>
     </div>
   </div>
 
@@ -721,7 +721,7 @@ tr:hover td{background:#fafafa}
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><i class="ti ti-check" aria-hidden="true"></i><span id="toastMsg"></span></div>
 
 <script>
 const API = '';
@@ -779,6 +779,9 @@ function showPage(id) {
 
   if (id === 'hospedes') {
     carregarHospedes();
+  }
+  if (id === 'relatorios') {
+    carregarRelatorios();
   }
 }
 // ===== UTILS =====
@@ -1367,6 +1370,7 @@ function imprimirCafe() { window.print(); }
 
 // ===== GOVERNANÇA =====
 let limpezaState = {};
+const LIMPEZA_STORAGE_KEY = 'AcolheBem_Limpeza_' + hoje();
 
 async function carregarGovernanca() {
   const hoje_str = hoje();
@@ -1387,7 +1391,7 @@ async function carregarGovernanca() {
     document.getElementById('govCO').textContent = checkouts.length;
     document.getElementById('govCI').textContent = checkins.length;
 
-    limpezaState = {};
+    try { limpezaState = JSON.parse(localStorage.getItem(LIMPEZA_STORAGE_KEY) || '{}'); } catch (_) { limpezaState = {}; }
     checkouts.forEach(r => limpezaState[r.quarto] = 'pendente');
     updateGovStats();
 
@@ -1487,9 +1491,35 @@ function toggleLimpeza(quarto, total) {
   btn.style.fontSize = '12px';
   btn.textContent = isLimpo ? '✓ Limpo' : '⏳ Pendente';
   updateGovStats();
+  localStorage.setItem(LIMPEZA_STORAGE_KEY, JSON.stringify(limpezaState));
   const pend = Object.values(limpezaState).filter(v => v === 'pendente').length;
   document.getElementById('limpBadge').textContent = pend + ' pendente' + (pend !== 1 ? 's' : '');
 }
+
+async function carregarRelatorios() {
+  const area = document.getElementById('relatoriosConteudo');
+  try {
+    const data = await fetchJSON('/api/reservas');
+    const reservas = Array.isArray(data.data) ? data.data : [];
+    const hojeBR = fmtBR(hoje());
+    const chegadas = reservas.filter(r => r.checkin === hojeBR).length;
+    const saidas = reservas.filter(r => r.checkout === hojeBR).length;
+    const confirmadas = reservas.filter(r => String(r.status || '').toLowerCase() !== 'cancelada').length;
+    area.innerHTML = `<div class="cards-grid cards-4">
+      <div class="card card-blue"><div class="card-label">Reservas cadastradas</div><div class="card-val">${reservas.length}</div><div class="card-sub">Base operacional atual</div></div>
+      <div class="card card-green"><div class="card-label">Confirmadas</div><div class="card-val">${confirmadas}</div><div class="card-sub">Sem cancelamento</div></div>
+      <div class="card card-orange"><div class="card-label">Check-ins hoje</div><div class="card-val">${chegadas}</div><div class="card-sub">Preparar chegada</div></div>
+      <div class="card card-red"><div class="card-label">Check-outs hoje</div><div class="card-val">${saidas}</div><div class="card-sub">Acionar governança</div></div>
+    </div><div class="form-section" style="margin-top:14px"><div class="form-section-header"><i class="ti ti-info-circle"></i><span class="form-section-title">Relatório somente leitura</span></div><div style="padding:14px;color:var(--text2);font-size:12px">Indicadores calculados da API de reservas. Nenhuma alteração é feita nos dados.</div></div>`;
+  } catch (e) {
+    area.innerHTML = '<div class="loading"><i class="ti ti-alert-circle"></i>Não foi possível carregar os indicadores. Tente novamente.</div>';
+    console.error(e);
+  }
+}
+
+document.querySelectorAll('.nav-item[role="button"]').forEach(item => item.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
+}));
 
 function updateGovStats() {
   const limpos = Object.values(limpezaState).filter(v => v === 'limpo').length;
