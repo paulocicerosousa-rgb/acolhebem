@@ -696,9 +696,7 @@ tr:hover td{background:#fafafa}
     <div class="topbar">
       <div><div class="topbar-title">Relatório</div><div class="topbar-sub">Visão geral do desempenho</div></div>
     </div>
-    <div class="content">
-      <div class="loading"><i class="ti ti-chart-bar"></i>Em construção — em breve disponível!</div>
-    </div>
+    <div class="content"><div id="relatoriosConteudo"><div class="loading"><i class="ti ti-chart-bar"></i>Carregando indicadores...</div></div></div>
   </div>
 
   <!-- ===== PONTO ===== -->
@@ -719,7 +717,7 @@ tr:hover td{background:#fafafa}
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><i class="ti ti-check" aria-hidden="true"></i><span id="toastMsg"></span></div>
  
 <script>
 const API = 'https://acolhebem-delta.vercel.app'
@@ -751,6 +749,7 @@ function showPage(id) {
   if (id === 'hospedes') {
     carregarHospedes();
   }
+  if (id === 'relatorios') carregarRelatorios();
 }
 // ===== UTILS =====
 function hoje() {
@@ -768,6 +767,19 @@ function showToast(msg, type = 'success') {
   t.className = 'toast show ' + type;
   document.getElementById('toastMsg').textContent = msg;
   setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+async function carregarRelatorios() {
+  const area = document.getElementById('relatoriosConteudo');
+  try {
+    const data = await fetchJSON('/api/reservas');
+    const reservas = Array.isArray(data.data) ? data.data : [];
+    const hojeBR = fmtBR(hoje());
+    const chegadas = reservas.filter(r => r.checkin === hojeBR).length;
+    const saidas = reservas.filter(r => r.checkout === hojeBR).length;
+    const confirmadas = reservas.filter(r => String(r.status || '').toLowerCase() !== 'cancelada').length;
+    area.innerHTML = `<div class="cards-grid cards-4"><div class="card"><div class="card-label">Reservas cadastradas</div><div class="card-val">${reservas.length}</div></div><div class="card card-green"><div class="card-label">Confirmadas</div><div class="card-val">${confirmadas}</div></div><div class="card card-orange"><div class="card-label">Check-ins hoje</div><div class="card-val">${chegadas}</div></div><div class="card card-red"><div class="card-label">Check-outs hoje</div><div class="card-val">${saidas}</div></div></div><div class="form-section" style="margin-top:14px;padding:14px;color:var(--text2);font-size:12px">Relatório somente leitura. Nenhuma alteração é feita nos dados.</div>`;
+  } catch (e) { area.innerHTML = '<div class="loading"><i class="ti ti-alert-circle"></i>Não foi possível carregar os indicadores.</div>'; console.error(e); }
 }
 
 function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
