@@ -1,4 +1,5 @@
 const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
+const { STATES, validStay } = require('../lib/operational-rules');
 
 // 🧹 Função para remover acentos, espaços extras e padronizar o nome
 function limparTexto(texto) {
@@ -71,6 +72,13 @@ module.exports = async (req, res) => {
     // ==========================================
     if (req.method === 'POST') {
       const body = req.body;
+      const requestedStatus = body.status || 'Reservado';
+      if (!validStay(body.checkin, body.checkout)) {
+        return res.status(400).json({ success: false, error: 'Check-in deve ser anterior ao check-out' });
+      }
+      if (!STATES.includes(requestedStatus)) {
+        return res.status(400).json({ success: false, error: 'Estado de reserva inválido' });
+      }
 
       const resp = await sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
@@ -94,7 +102,7 @@ module.exports = async (req, res) => {
         body.observacoes || '',
         body.checkin || '',
         body.checkout || '',
-        body.status || 'Reservado',
+        requestedStatus,
         hoje,
         '',
         body.telefone || '',
