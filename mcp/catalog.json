@@ -1,0 +1,10 @@
+{
+  "version": "0.1",
+  "mode": "read_only",
+  "tools": [
+    {"name":"consultar_reservas","method":"GET","source":"Base de Reservas","writes":false},
+    {"name":"consultar_disponibilidade","method":"GET","source":"API de disponibilidade","writes":false},
+    {"name":"resumo_governanca","method":"GET","source":"API de reservas + governança","writes":false}
+  ],
+  "safety": {"allow_mutations": false, "expose_sensitive_guest_data": false, "on_source_failure": "report_unavailable"}
+}
