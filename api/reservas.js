@@ -1,5 +1,5 @@
 const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
-const { STATES, validStay } = require('../lib/operational-rules');
+const { STATES, validStay, canTransition } = require('../lib/operational-rules');
 
 // 🧹 Função para remover acentos, espaços extras e padronizar o nome
 function limparTexto(texto) {
@@ -197,6 +197,7 @@ module.exports = async (req, res) => {
     // 👇 Este é o bloco novo milimetricamente encaixado
     if (req.method === 'PUT') {
       const body = req.body;
+      if (!STATES.includes(body.status)) return res.status(400).json({ success: false, error: 'Estado de reserva inválido' });
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
@@ -214,12 +215,17 @@ module.exports = async (req, res) => {
         });
       }
 
+      const current = (await sheets.spreadsheets.values.get({ spreadsheetId, range: `Base de Reservas!N${linhaIndex + 1}` })).data.values?.[0]?.[0] || 'Reservado';
+      if (current !== body.status && !canTransition(current, body.status)) {
+        return res.status(409).json({ success: false, error: `Transição inválida: ${current} → ${body.status}` });
+      }
+
       await sheets.spreadsheets.values.update({
         spreadsheetId: spreadsheetId,
         range: `Base de Reservas!N${linhaIndex + 1}`,
         valueInputOption: 'USER_ENTERED',
         resource: {
-          values: [[ body.status || 'Liquidado' ]]
+          values: [[ body.status ]]
         }
       });
 
