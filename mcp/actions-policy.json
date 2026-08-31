@@ -1,0 +1,1 @@
+{"mode":"disabled_in_pilot","mutations":["create_reservation","change_reservation","cancel_reservation","send_message"],"policy":"deny_by_default","future_enablement":"explicit_human_confirmation_and_idempotency_key","audit":"record_actor_tool_timestamp_target_result"}
