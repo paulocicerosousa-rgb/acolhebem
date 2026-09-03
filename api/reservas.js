@@ -73,7 +73,7 @@ module.exports = async (req, res) => {
     if (req.method === 'POST') {
       const body = req.body;
       const requestedStatus = body.status || 'Reservado';
-      if (!validStay(body.checkin, body.checkout)) {
+      if (body.checkin && body.checkout && new Date(body.checkin) >= new Date(body.checkout)) {
         return res.status(400).json({ success: false, error: 'Check-in deve ser anterior ao check-out' });
       }
       if (!STATES.includes(requestedStatus)) {
