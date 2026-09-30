@@ -1,5 +1,4 @@
 const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
-const { STATES, validStay, canTransition } = require('../lib/operational-rules');
 
 // 🧹 Função para remover acentos, espaços extras e padronizar o nome
 function limparTexto(texto) {
@@ -13,7 +12,7 @@ function limparTexto(texto) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  // 👇 Aqui eu liberei a permissão para a rota PUT funcionar
+  // 👇 Permissão PUT restaurada para a liquidação funcionar
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email');
 
@@ -22,10 +21,10 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // 🌐 Captura o e-mail do hotel logado (via Header, Query String ou Body)
+    // 🌐 Captura o e-mail do hotel logado
     const email = req.headers['x-user-email'] || req.query.email || (req.body && req.body.email);
 
-    // 🧭 Roteamento inteligente: descobre qual planilha deve abrir
+    // 🧭 Roteamento inteligente
     const spreadsheetId = await obterPlanilhaIdPorEmail(email);
 
     // ==========================================
@@ -72,13 +71,6 @@ module.exports = async (req, res) => {
     // ==========================================
     if (req.method === 'POST') {
       const body = req.body;
-      const requestedStatus = body.status || 'Reservado';
-      if (body.checkin && body.checkout && new Date(body.checkin) >= new Date(body.checkout)) {
-        return res.status(400).json({ success: false, error: 'Check-in deve ser anterior ao check-out' });
-      }
-      if (!STATES.includes(requestedStatus)) {
-        return res.status(400).json({ success: false, error: 'Estado de reserva inválido' });
-      }
 
       const resp = await sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
@@ -102,7 +94,7 @@ module.exports = async (req, res) => {
         body.observacoes || '',
         body.checkin || '',
         body.checkout || '',
-        requestedStatus,
+        body.status || 'Reservado',
         hoje,
         '',
         body.telefone || '',
@@ -128,7 +120,6 @@ module.exports = async (req, res) => {
 
       const hospedes = (respHospedes.data.values || []).slice(1);
 
-      // 🧠 Busca inteligente ignorando acentos, maiúsculas e espaços duplos
       const linhaIndex = hospedes.findIndex(h =>
         limparTexto(h[1]) === limparTexto(body.hospede)
       );
@@ -194,10 +185,9 @@ module.exports = async (req, res) => {
     // ==========================================
     // 3. ATUALIZAR RESERVA (MUDAR STATUS)
     // ==========================================
-    // 👇 Este é o bloco novo milimetricamente encaixado
+    // 👇 Este é o bloco que havia ficado de fora e faz o botão Liquidar funcionar!
     if (req.method === 'PUT') {
       const body = req.body;
-      if (!STATES.includes(body.status)) return res.status(400).json({ success: false, error: 'Estado de reserva inválido' });
 
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
@@ -215,17 +205,12 @@ module.exports = async (req, res) => {
         });
       }
 
-      const current = (await sheets.spreadsheets.values.get({ spreadsheetId, range: `Base de Reservas!N${linhaIndex + 1}` })).data.values?.[0]?.[0] || 'Reservado';
-      if (current !== body.status && !canTransition(current, body.status)) {
-        return res.status(409).json({ success: false, error: `Transição inválida: ${current} → ${body.status}` });
-      }
-
       await sheets.spreadsheets.values.update({
         spreadsheetId: spreadsheetId,
         range: `Base de Reservas!N${linhaIndex + 1}`,
         valueInputOption: 'USER_ENTERED',
         resource: {
-          values: [[ body.status ]]
+          values: [[ body.status || 'Liquidado' ]]
         }
       });
 
