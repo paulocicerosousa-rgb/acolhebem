@@ -313,6 +313,10 @@ tr:hover td{background:#fafafa}
     </div>
 
     <div class="nav-section">Operação</div>
+   
+<div class="nav-item" onclick="showPage('page-logbook'); carregarLogbook();">
+  <i class="ti ti-notebook"></i> Logbook
+</div>
 
     <div class="nav-item" onclick="showPage('governanca')">
       <i class="ti ti-brush"></i> Governança
@@ -1879,6 +1883,77 @@ async function verificarCortesia() {
   }
 } 
 </script>
-  
+<!-- Coloque logo antes de </body> no final de index.html -->
+<script>
+// CARREGAR LOGBOOK
+async function carregarLogbook() {
+  const emailHotel = localStorage.getItem('AcolheBem_EmailHotel') || '';
+  const container = document.getElementById('lista-logbook');
+  container.innerHTML = '<p>Carregando ocorrências...</p>';
+
+  try {
+    const resp = await fetch(API + '/api/logbook', {
+      method: 'GET',
+      headers: { 'x-user-email': emailHotel }
+    });
+    const json = await resp.json();
+
+    if (json.success && json.data.length > 0) {
+      container.innerHTML = '';
+      json.data.forEach(item => {
+        container.innerHTML += `
+          <div style="background: #fff; border-left: 4px solid #007bff; padding: 12px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <small style="color: #6c757d;"><b>${item.dataHora}</b> - Por: <b>${item.recepconista}</b></small>
+            <p style="margin: 5px 0 0 0; font-size: 15px;">${item.ocorrencia}</p>
+          </div>
+        `;
+      });
+    } else {
+      container.innerHTML = '<p>Nenhuma ocorrência registrada até o momento.</p>';
+    }
+  } catch (error) {
+    container.innerHTML = '<p style="color: red;">Erro ao carregar o Logbook.</p>';
+  }
+}
+
+// SALVAR OCORRÊNCIA
+async function salvarLogbook() {
+  const recep = document.getElementById('logbook-recep').value.trim();
+  const texto = document.getElementById('logbook-texto').value.trim();
+  const emailHotel = localStorage.getItem('AcolheBem_EmailHotel') || '';
+
+  if (!texto) {
+    alert('Por favor, descreva a ocorrência.');
+    return;
+  }
+
+  try {
+    const resp = await fetch(API + '/api/logbook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-email': emailHotel
+      },
+      body: JSON.stringify({
+        recepconista: recep || 'Recepção',
+        ocorrencia: texto
+      })
+    });
+
+    const json = await resp.json();
+
+    if (json.success) {
+      document.getElementById('logbook-texto').value = '';
+      alert('Ocorrência registrada com sucesso!');
+      carregarLogbook(); // Atualiza a lista automaticamente
+    } else {
+      alert('Erro ao salvar: ' + (json.error || 'Tente novamente'));
+    }
+  } catch (error) {
+    alert('Erro de conexão ao salvar ocorrência.');
+  }
+}
+</script>
+
 </body>
-</html>
+</html>  
