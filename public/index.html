@@ -583,7 +583,32 @@ tr:hover td{background:#fafafa}
     </tbody>
   </table>
 </div>
-<div class="page" id="page-hospedes">
+<!-- TELA LOGBOOK / LIVRO DE OCORRÊNCIAS -->
+<div id="page-logbook" class="page" style="display: none; padding: 20px;">
+  <h2>📖 Logbook da Recepção</h2>
+  <p>Anote e consulte os acontecimentos importantes do turno.</p>
+
+  <!-- FORMULÁRIO DE NOVA OCORRÊNCIA -->
+  <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd;">
+    <h4 style="margin-top: 0;">Nova Ocorrência</h4>
+    <div style="margin-bottom: 10px;">
+      <label><b>Nome / Responsável:</b></label>
+      <input type="text" id="logbook-recep" class="form-control" placeholder="Ex: Maria (Turno Manhã)" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+    <div style="margin-bottom: 10px;">
+      <label><b>Ocorrência / Observação:</b></label>
+      <textarea id="logbook-texto" class="form-control" rows="3" placeholder="Descreva o que aconteceu (ex: Hóspede do quarto 12 solicitou toalha extra, chave reserva entregue, etc.)" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="salvarLogbook()" style="background-color: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">📌 Salvar Ocorrência</button>
+  </div>
+
+  <!-- HISTÓRICO DE OCORRÊNCIAS -->
+  <h3>Histórico de Ocorrências</h3>
+  <div id="lista-logbook" style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+    <!-- Preenchido via JS -->
+  </div>
+</div>
+  <div class="page" id="page-hospedes">
 
     <div class="topbar">
         <div>
