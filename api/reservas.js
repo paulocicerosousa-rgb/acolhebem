@@ -3,16 +3,15 @@ const { sheets, obterPlanilhaIdPorEmail } = require('./_sheets');
 // 🧹 Função para remover acentos, espaços extras e padronizar o nome
 function limparTexto(texto) {
   return String(texto || '')
-    .normalize('NFD') // Separa as letras dos acentos
-    .replace(/[\u0300-\u036f]/g, '') // Remove os acentos
-    .replace(/\s+/g, ' ') // Transforma espaços duplos em um espaço só
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
 }
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  // 👇 Permissão PUT restaurada para a liquidação funcionar
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email');
 
@@ -24,7 +23,7 @@ module.exports = async (req, res) => {
     // 🌐 Captura o e-mail do hotel logado
     const email = req.headers['x-user-email'] || req.query.email || (req.body && req.body.email);
 
-    // 🧭 Roteamento inteligente
+    // 🧭 Roteamento inteligente por e-mail
     const spreadsheetId = await obterPlanilhaIdPorEmail(email);
 
     // ==========================================
@@ -185,7 +184,6 @@ module.exports = async (req, res) => {
     // ==========================================
     // 3. ATUALIZAR RESERVA (MUDAR STATUS)
     // ==========================================
-    // 👇 Este é o bloco que havia ficado de fora e faz o botão Liquidar funcionar!
     if (req.method === 'PUT') {
       const body = req.body;
 
